@@ -1,0 +1,6293 @@
+// =============================================================================
+// Framework Renderer — main stylesheet
+// Inter (Google), Phosphor icons, min 1rem text, min 400 weight.
+// MOBILE-FIRST: base = mobile; min-width breakpoint'ler ile büyütülür.
+// max-width kullanılırsa MUTLAKA mobile-* mixin'i üzerinden semantic.
+// =============================================================================
+
+// ─── BREAKPOINT MIXIN'LERİ — mobile-first semantic ──────────────────────────
+// Base (no media): mobile (320-419)
+// sm-up    : ≥ 420px (büyük telefon yatay)
+// md-up    : ≥ 720px (tablet)
+// lg-up    : ≥ 1024px (dizüstü)
+// xl-up    : ≥ 1240px (masaüstü geniş)
+// mobile-only / sm-only / md-down / lg-down : intent açık mobile/tablet override
+
+@mixin sm-up    { @media (min-width: 420px)  { @content; } }
+@mixin md-up    { @media (min-width: 720px)  { @content; } }
+@mixin lg-up    { @media (min-width: 1024px) { @content; } }
+@mixin xl-up    { @media (min-width: 1240px) { @content; } }
+
+// Mobile override (intent: kart compact, drawer behavior)
+// NOT: Bu beş tanım MUTLAKA HAM @media olmalı (mixin'e dönüştürülürse sonsuz döngü).
+@mixin mobile-only { @media (max-width: 719px)  { @content; } }
+@mixin sm-only     { @media (max-width: 419px)  { @content; } }
+@mixin md-down     { @media (max-width: 819px)  { @content; } }
+@mixin nav-down    { @media (max-width: 980px)  { @content; } }
+@mixin lg-down     { @media (max-width: 1239px) { @content; } }
+//
+// ## SPACING TOKEN SÖZLÜĞÜ (R3-E — yeni stiller için zorunlu)
+// ──────────────────────────────────────────────────────────
+// Yeni stil yazarken hardcoded rem değer KULLANMA. Aşağıdaki tabloyu kullan:
+//
+//   0.125rem → --space-0      (~2px,  hairline)
+//   0.25rem  → --space-1      (~4px)
+//   0.5rem   → --space-2      (~8px)
+//   0.75rem  → --space-3      (~12px)
+//   1rem     → --space-4      (~16px)
+//   1.25rem  → --space-5      (~20px)
+//   1.5rem   → --space-6      (~24px)
+//   2rem     → --space-7      (~32px)
+//   3rem     → --space-8      (~48px)
+//   4rem     → --space-9      (~64px)
+//
+// Kart-içi padding için:    var(--card-pad-y) / var(--card-pad-x)
+// Main layout padding için: var(--main-pad-y) / var(--main-pad-x)
+// Radius için:               var(--radius-sm/md/lg/xl/pill)
+// Font size için:            var(--fs-xs/sm/md/lg/xl/2xl/3xl)
+//
+// MEVCUT hardcoded değerler korunur (regresyon riski) ama YENİ stiller token'a
+// uymalıdır. Refaktör zamanı geldiğinde bu sözlüğü referans al.
+// =============================================================================
+
+:root {
+  // ===== DESIGN TOKENS =====
+  // Spacing scale (8pt grid)
+  --space-1: 0.25rem;   //  4px
+  --space-2: 0.5rem;    //  8px
+  --space-3: 0.75rem;   // 12px
+  --space-4: 1rem;      // 16px
+  --space-5: 1.25rem;   // 20px
+  --space-6: 1.5rem;    // 24px
+  --space-7: 2rem;      // 32px
+  --space-8: 2.5rem;    // 40px
+  --space-9: 3rem;      // 48px
+
+  // Border radii
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 10px;
+  --radius-xl: 14px;
+  --radius-pill: 999px;
+
+  // Card system (her yerde aynı dokunuş)
+  --card-bg: #ffffff;
+  --card-bg-soft: #fafaf9;
+  --card-border: #e8e8e6;
+  --card-pad-y: var(--space-5);
+  --card-pad-x: var(--space-5);
+  --card-radius: var(--radius-lg);
+  --card-gap: var(--space-3);
+
+  // Shadow scale
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.04);
+  --shadow-md: 0 2px 8px rgba(0,0,0,0.06);
+  --shadow-lg: 0 8px 24px rgba(0,0,0,0.08);
+
+  // Type scale — MIN 1rem (kullanıcı kararı): hiçbir text 1rem'den küçük olmaz.
+  // Aşağıda xs/sm 1rem ve 1.0625rem'e çekildi; alt seviyeler line-height ile ayrışır.
+  --fs-xs: 1rem;       // ulaşılması zor küçük chip/meta için bile 1rem
+  --fs-sm: 1.0625rem;  // gövde metni (17px)
+  --fs-base: 1.125rem; // varsayılan body (18px)
+  --fs-md: 1.1875rem;
+  --fs-lg: 1.3125rem;
+  --fs-xl: 1.5rem;
+  --fs-2xl: 1.75rem;
+  --fs-3xl: 2.125rem;
+
+  // Layout — sol sidebar FLUID: clamp(min, viewport%, max)
+  // min 280px (yazılar sığsın), max 360px (geniş ekran fazla yer kaplamasın), ideal ~22vw
+  --sidebar-w: clamp(280px, 22vw, 360px);
+  --detail-w: 320px;
+  --main-pad-y: var(--space-9);
+  --main-pad-x: var(--space-8);
+
+  // Ink palette
+  --ink: #1a1a1a;
+  --ink-2: #3d3d3d;
+  --ink-3: #636363;  // R3 a11y: WCAG AA — tüm zeminlerde ≥4.5:1
+  --ink-4: #6c6c6c;  // R3 a11y: 2.8→4.6:1 (ink-3'ten hâlâ açık, hiyerarşi korunur)
+  --ink-5: #cccccc;
+
+  // Surface — kart yüzeyleri sayfa bg'ye karşı belirgin kontrast taşır
+  --bg: #ffffff;             // kart yüzeyi (en üst katman)
+  --bg-soft: #f1f3f6;        // sayfa zemini (light mode) — net farklı
+  --bg-softer: #e9ecef;      // recessed yüzey
+  --bg-page: #eef0f4;        // SAYFA arka planı — kartlar burada yüzer
+  --line: #d8dde3;           // kart sınırları — daha koyu, kontrast
+  --line-2: #e6e9ed;
+  --line-strong: #c2c8d0;    // hover/active için kalın çizgi
+
+  // Layer tones
+  --kernel: #b73a3a;     --kernel-soft: #faece9;
+  --scale:  #5a2e8a;     --scale-soft:  #f1eaf9;
+  --l1:     #0f5f5c;     --l1-soft:     #e7f1f0;
+  --l2:     #1e5fa0;     --l2-soft:     #e7eef7;
+  --l3:     #5b5b5b;     --l3-soft:     #efefef;
+  --atomic: #8a4b00;     --atomic-soft: #fbf2e6;
+
+  // Callout
+  --warn: #8a4b00;       --warn-soft: #fbf2e6;
+  --tr:   #c91428;       --tr-soft:   #fce8eb;
+
+  // Code
+  --code-bg: #f5f5f4;
+
+  // Radius
+  --radius: 4px;
+  --radius-lg: 6px;
+
+  // ────────────────────────────────────────────────────────────────────
+  // NEUMORPHISM (SOFT UI) tokenleri — kart, buton, chip yüzeyleri
+  // Felsefe: sert border yerine çift yumuşak gölge ile kabartma hissi
+  // ────────────────────────────────────────────────────────────────────
+  --neu-bg: var(--bg-page);                          // ana yüzey (kart altı)
+  --neu-surface: var(--bg-page);                     // kart kendisi (bg ile aynı)
+  --neu-shadow-light: rgba(255, 255, 255, 0.9);      // sol-üst aydınlık
+  --neu-shadow-dark: rgba(166, 174, 192, 0.55);      // sağ-alt karanlık
+  --neu-distance: 8px;
+  --neu-blur: 18px;
+  --neu-distance-sm: 4px;
+  --neu-blur-sm: 9px;
+  --neu-distance-lg: 14px;
+  --neu-blur-lg: 28px;
+  --neu-radius: 18px;
+  --neu-radius-sm: 12px;
+  --neu-radius-pill: 999px;
+}
+
+* { box-sizing: border-box; }
+html {
+  font-size: 16px;
+  // Türkçe karakter desteği için latin-ext otomatik yüklenir (Roboto + Inter Google Fonts).
+  // İçeriklerde ı, ş, ğ, ç, ö, ü, İ, Ş, Ğ, Ç, Ö, Ü tam destekli.
+  text-rendering: optimizeLegibility;
+}
+
+body {
+  margin: 0;
+  // Inter öncelikli (Google Web Font), system fallback.
+  font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', 'Roboto', sans-serif;
+  font-weight: 400;
+  font-size: var(--fs-base); // 1.125rem (18px) — okunaklılık önceliği
+  line-height: 1.6;
+  color: var(--ink);
+  background: var(--bg);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  font-feature-settings: 'kern', 'liga', 'tnum', 'cv11', 'ss01';
+  letter-spacing: -0.005em;
+}
+// Headings — Inter, sıkıştırılmış letter-spacing, h1-h6 hepsi 1rem üstü
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'Inter', system-ui, sans-serif;
+  letter-spacing: -0.015em;
+  line-height: 1.25;
+  font-weight: 600;
+}
+h6 { font-size: 1rem; }   // 17px
+h5 { font-size: var(--fs-md); }   // 19px
+h4 { font-size: var(--fs-lg); }   // 21px
+h3 { font-size: var(--fs-xl); }   // 24px
+h2 { font-size: var(--fs-2xl); }  // 28px
+h1 { font-size: var(--fs-3xl); }  // 34px
+
+// "small", "code", "kbd" küçük metin elemanları min 1rem
+small, .small, code, kbd, .meta, .caption {
+  font-size: 1rem; // 1rem garantili
+}
+
+// ------ App layout ------
+// NOT: Asıl layout kuralları dosya sonundaki "LAYOUT FINAL" bloğunda.
+// Buradakiler sadece display/sığa/typography — position/sticky orada belirlenir.
+#app {
+  min-height: 100vh;
+  max-width: 1680px;
+  margin: 0 auto;
+  background: var(--bg);
+}
+
+.sidebar {
+  background: var(--bg-soft);
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  font-size: 1rem;
+
+  &__brand {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    font-weight: 500;
+    font-size: 1.125rem;
+    letter-spacing: -0.01em;
+    color: var(--ink);
+    i { color: var(--l1); font-size: 1.625rem; }
+  }
+
+  &__link {
+    color: var(--ink-3);
+    text-decoration: none;
+    font-size: 1rem;
+  }
+}
+
+.main {
+  width: 100%;
+  min-width: 0;
+}
+
+// ------ Hero ------
+.hero {
+  border-bottom: 1px solid var(--line);
+  padding-bottom: 1.75rem;
+  margin-bottom: 2rem;
+
+  &__eyebrow {
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    font-size: 1rem;
+    color: var(--ink-3);
+    margin-bottom: 0.75rem;
+  }
+
+  &__title {
+    font-size: 2.25rem;
+    font-weight: 300;
+    margin: 0 0 0.75rem;
+    letter-spacing: -0.02em;
+    line-height: 1.2;
+  }
+
+  &__lede {
+    font-size: 1.125rem;
+    color: var(--ink-2);
+    margin: 0 0 1rem;
+    max-width: 64ch;
+    line-height: 1.6;
+  }
+
+  &__meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.5rem;
+    font-size: 1rem;
+    color: var(--ink-3);
+
+    span { display: flex; align-items: center; gap: 0.4rem; }
+    i { color: var(--l1); }
+  }
+}
+
+// ------ Filter bar ------
+.filter-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.5rem;
+  padding: 1rem 1.25rem;
+  background: var(--bg-soft);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  margin-bottom: 2rem;
+
+  &__group { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
+  &__label { font-weight: 500; color: var(--ink-3); font-size: 1rem; text-transform: uppercase; letter-spacing: 0.08em; }
+  &__chips { display: flex; gap: 0.35rem; flex-wrap: wrap; }
+}
+
+.chip {
+  appearance: none;
+  font: inherit;
+  font-size: 1rem;
+  font-weight: 400;
+  padding: 0.35rem 0.8rem;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--bg);
+  color: var(--ink-2);
+  cursor: pointer;
+  transition: all 0.12s;
+
+  // Hover: sadece border + minik bg shift; bg KARARTMA (kontrast kırılmasın)
+  &:hover:not(.chip--active) {
+    border-color: var(--ink-4);
+    color: var(--ink);
+    background: var(--bg-soft);
+  }
+  &--active {
+    background: var(--ink);
+    color: var(--bg);
+    border-color: var(--ink);
+    &:hover { background: var(--ink); color: var(--bg); }
+  }
+
+  &--kernel.chip--active { background: var(--kernel); border-color: var(--kernel); }
+  &--scale.chip--active  { background: var(--scale); border-color: var(--scale); }
+  &--l1.chip--active     { background: var(--l1); border-color: var(--l1); }
+  &--l2.chip--active     { background: var(--l2); border-color: var(--l2); }
+  &--l3.chip--active     { background: var(--l3); border-color: var(--l3); }
+  &--atomic.chip--active { background: var(--atomic); border-color: var(--atomic); }
+}
+
+// ------ TOC (accordion) ------
+.toc {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+
+  &__group {
+    display: flex;
+    flex-direction: column;
+    border-bottom: 1px solid var(--line);
+
+    &:last-child { border-bottom: 0; }
+  }
+
+  // Accordion header — clickable
+  &__group-header {
+    appearance: none;
+    font: inherit;
+    cursor: pointer;
+    background: transparent;
+    border: 0;
+    width: 100%;
+    text-align: left;
+    padding: 0.55rem 0.4rem;
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    color: var(--ink-2);
+    font-weight: 500;
+    font-size: 1rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    border-radius: var(--radius);
+    transition: background 0.12s;
+
+    &:hover { background: var(--bg); color: var(--ink); }
+    &:focus-visible {
+      outline: 2px solid var(--l1);
+      outline-offset: 1px;
+    }
+
+    .toc__group-icon { color: var(--ink-3); font-size: 1.125rem; }
+    .toc__group-label { flex: 1; }
+    .toc__chevron {
+      color: var(--ink-4);
+      transition: transform 0.18s ease;
+      font-size: 1rem;
+    }
+
+    &[aria-expanded="true"] {
+      color: var(--ink);
+      .toc__group-icon { color: var(--l1); }
+      .toc__chevron { transform: rotate(180deg); }
+    }
+  }
+
+  // Accordion body — animated max-height
+  &__group-body {
+    overflow: hidden;
+    max-height: 2000px;
+    transition: max-height 0.25s ease, opacity 0.18s ease, padding 0.18s ease;
+    opacity: 1;
+    padding: 0.25rem 0 0.6rem 0.4rem;
+  }
+
+  &__group[data-collapsed="true"] &__group-body {
+    max-height: 0;
+    opacity: 0;
+    padding-top: 0;
+    padding-bottom: 0;
+  }
+
+  &__list { list-style: none; padding: 0; margin: 0; }
+  &__item { margin: 0.15rem 0; }
+  &__item a {
+    color: var(--ink-2);
+    text-decoration: none;
+    padding: 0.35rem 0.6rem;
+    border-radius: var(--radius);
+    border-left: 2px solid transparent;
+    display: block;
+    transition: all 0.12s;
+    font-size: 1rem;
+    line-height: 1.4;
+
+    &:hover { background: var(--bg); color: var(--l1); border-left-color: var(--l1); }
+  }
+  &__link--active {
+    background: var(--bg);
+    color: var(--l1) !important;
+    border-left-color: var(--l1) !important;
+    font-weight: 500;
+  }
+
+  &__item--kernel a:hover { color: var(--kernel); border-left-color: var(--kernel); }
+  &__item--scale a:hover  { color: var(--scale); border-left-color: var(--scale); }
+  &__item--l1 a:hover     { color: var(--l1); border-left-color: var(--l1); }
+  &__item--l2 a:hover     { color: var(--l2); border-left-color: var(--l2); }
+  &__item--atomic a:hover { color: var(--atomic); border-left-color: var(--atomic); }
+
+  // Group counter — kaç cluster
+  &__group-count {
+    font-size: 1rem;
+    color: var(--ink-4);
+    font-weight: 400;
+    margin-left: 0.3rem;
+    letter-spacing: 0;
+    text-transform: none;
+  }
+}
+
+// ------ Search box ------
+.search-box {
+  position: relative;
+
+  &__inner {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.6rem 0.85rem;
+    background: var(--bg);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+  }
+
+  &__icon { color: var(--ink-4); font-size: 1.125rem; }
+
+  &__input {
+    flex: 1;
+    border: 0;
+    outline: 0;
+    background: transparent;
+    font: inherit;
+    font-size: 1rem;
+    color: var(--ink);
+    min-width: 0;
+
+    &::placeholder { color: var(--ink-4); }
+  }
+
+  &__hint {
+    font-family: 'Roboto Mono', monospace;
+    font-size: 1rem;
+    background: var(--bg-softer);
+    color: var(--ink-3);
+    padding: 0.1rem 0.45rem;
+    border-radius: 3px;
+    border: 1px solid var(--line);
+  }
+
+  &__results {
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0;
+    right: 0;
+    max-height: 60vh;
+    overflow-y: auto;
+    background: var(--bg);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+    z-index: 100;
+  }
+
+  &__empty {
+    padding: 1rem;
+    color: var(--ink-3);
+    font-size: 1rem;
+  }
+}
+
+.search-result {
+  display: block;
+  padding: 0.75rem 0.95rem;
+  text-decoration: none;
+  border-bottom: 1px solid var(--line-2);
+  color: var(--ink-2);
+
+  &:last-child { border-bottom: 0; }
+  &:hover { background: var(--bg-soft); }
+
+  &__title { font-weight: 500; color: var(--ink); font-size: 1rem; }
+  &__snippet { font-size: 1rem; color: var(--ink-3); margin-top: 0.2rem; line-height: 1.5; }
+  &__meta { font-size: 1rem; color: var(--ink-4); margin-top: 0.25rem; font-family: 'Roboto Mono', monospace; }
+
+  mark { background: linear-gradient(180deg, transparent 60%, var(--l1-soft) 60%); color: inherit; padding: 0 1px; }
+}
+
+// ------ Cluster / domain card ------
+.cluster {
+  margin-bottom: 3rem;
+  padding: 1.75rem 2rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--bg);
+  scroll-margin-top: 1rem;
+  transition: box-shadow 0.3s, border-color 0.3s;
+
+  &--highlight {
+    box-shadow: 0 0 0 3px var(--l1-soft);
+    border-color: var(--l1);
+  }
+
+  &__header { margin-bottom: 1.25rem; }
+
+  &__badge {
+    display: inline-block;
+    font-size: 1rem;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    font-weight: 500;
+    padding: 0.25rem 0.7rem;
+    border-radius: 3px;
+    margin-bottom: 0.7rem;
+    background: var(--bg-softer);
+    color: var(--ink-3);
+  }
+
+  &__title {
+    font-size: 1.75rem;
+    font-weight: 400;
+    margin: 0 0 0.35rem;
+    letter-spacing: -0.015em;
+    line-height: 1.25;
+    display: flex; align-items: center; gap: 0.6rem;
+
+    i { color: var(--l1); font-size: 2rem; }
+  }
+
+  &__subtitle {
+    font-size: 1.125rem;
+    color: var(--ink-2);
+    margin: 0;
+    max-width: 64ch;
+    line-height: 1.55;
+  }
+
+  &__tags { display: flex; gap: 0.35rem; flex-wrap: wrap; margin-top: 0.5rem; }
+}
+
+.cluster[data-layer="kernel"]  { border-left: 4px solid var(--kernel); .cluster__title i { color: var(--kernel); } .cluster__badge { background: var(--kernel-soft); color: var(--kernel); } }
+.cluster[data-layer="scale"]   { border-left: 4px solid var(--scale);  .cluster__title i { color: var(--scale); }  .cluster__badge { background: var(--scale-soft); color: var(--scale); } }
+.cluster[data-layer="l1"]      { border-left: 4px solid var(--l1);     .cluster__title i { color: var(--l1); }     .cluster__badge { background: var(--l1-soft); color: var(--l1); } }
+.cluster[data-layer="l2"]      { border-left: 4px solid var(--l2);     .cluster__title i { color: var(--l2); }     .cluster__badge { background: var(--l2-soft); color: var(--l2); } }
+.cluster[data-layer="l3"]      { border-left: 4px solid var(--l3);     .cluster__title i { color: var(--l3); }     .cluster__badge { background: var(--l3-soft); color: var(--l3); } }
+.cluster[data-layer="atomic"]  { border-left: 4px solid var(--atomic); .cluster__title i { color: var(--atomic); } .cluster__badge { background: var(--atomic-soft); color: var(--atomic); } }
+
+.tag {
+  display: inline-block;
+  font-size: 1rem;
+  padding: 0.15rem 0.6rem;
+  background: var(--bg-softer);
+  color: var(--ink-3);
+  border-radius: 999px;
+}
+
+// ------ Block: paragraph ------
+.block-paragraph { margin: 0 0 1rem; max-width: 66ch; }
+.block-paragraph strong { font-weight: 500; }
+.block-paragraph em {
+  background: linear-gradient(180deg, transparent 60%, var(--l1-soft) 60%);
+  padding: 0 2px;
+  font-style: normal;
+}
+
+// ------ Block: heading ------
+.block-heading {
+  letter-spacing: -0.005em;
+  display: flex; align-items: center; gap: 0.55rem;
+  scroll-margin-top: 1rem;
+
+  &--l2 { font-size: 1.5rem; font-weight: 400; margin: 2.5rem 0 1rem; border-bottom: 1px solid var(--line); padding-bottom: 0.5rem; }
+  &--l3 { font-size: 1.25rem; font-weight: 500; margin: 2rem 0 0.85rem; }
+  &--l4 { font-size: 1.125rem; font-weight: 500; margin: 1.5rem 0 0.65rem; color: var(--ink-2); }
+  &--l5 { font-size: 1rem; font-weight: 500; text-transform: uppercase; letter-spacing: 0.08em; color: var(--ink-3); margin: 1.25rem 0 0.5rem; }
+
+  i { color: var(--l1); font-size: 1.25em; }
+
+  .heading-anchor {
+    opacity: 0;
+    margin-left: 0.4rem;
+    color: var(--ink-4);
+    text-decoration: none;
+    font-size: 1rem;
+    transition: opacity 0.12s;
+  }
+  &:hover .heading-anchor { opacity: 1; }
+}
+
+// ------ Block: code (accordion, kapalı varsayılan) ------
+.block-code {
+  margin: 1rem 0 1.5rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--bg-soft);
+  overflow: hidden;
+
+  // Summary (tıklanabilir başlık)
+  &__summary {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.55rem 0.85rem;
+    cursor: pointer;
+    user-select: none;
+    list-style: none;
+    font-size: 1rem;
+    color: var(--ink-2);
+
+    &::-webkit-details-marker { display: none; }
+    &::marker { content: ''; }
+
+    &:hover { background: color-mix(in srgb, var(--ink) 4%, var(--bg-soft)); }
+  }
+
+  &__chevron {
+    display: inline-flex;
+    align-items: center;
+    transition: transform 160ms ease;
+    color: var(--ink-3);
+    i { font-size: 1rem; }
+  }
+  &[open] &__chevron { transform: rotate(90deg); color: var(--ink-2); }
+
+  &__title {
+    font-family: 'Roboto Mono', monospace;
+    font-size: 1rem;
+    color: var(--ink);
+    flex: 1;
+  }
+
+  &__meta {
+    display: inline-flex;
+    gap: 0.4rem;
+    font-size: 1rem;
+    color: var(--ink-3);
+  }
+  &__lang {
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    padding: 0.08rem 0.45rem;
+    border: 1px solid var(--line);
+    background: var(--bg);
+    border-radius: 999px;
+    font-weight: 500;
+  }
+  &__lines {
+    padding: 0.08rem 0.45rem;
+    background: var(--bg);
+    border-radius: 999px;
+    border: 1px solid var(--line);
+  }
+
+  &__body {
+    position: relative;
+    border-top: 1px solid var(--line);
+  }
+
+  pre {
+    font-family: 'Roboto Mono', monospace;
+    background: var(--code-bg);
+    padding: 1rem 1.25rem;
+    overflow-x: auto;
+    font-size: 1rem;
+    line-height: 1.6;
+    margin: 0;
+    border: 0;
+    border-radius: 0;
+  }
+  code { background: transparent; padding: 0; font-size: inherit; font-weight: 400; }
+
+  &__copy {
+    position: absolute;
+    top: 0.5rem;
+    right: 0.5rem;
+    background: var(--bg);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    width: 28px; height: 28px;
+    cursor: pointer;
+    color: var(--ink-3);
+    display: flex; align-items: center; justify-content: center;
+    opacity: 0;
+    transition: opacity 0.12s;
+    &:hover { color: var(--ink); }
+  }
+
+  &__body:hover &__copy,
+  &:focus-within &__copy { opacity: 1; }
+}
+
+// Inline code
+p code, li code, td code, dd code {
+  font-family: 'Roboto Mono', monospace;
+  background: var(--code-bg);
+  padding: 0.12rem 0.4rem;
+  border-radius: 3px;
+  font-size: 1rem;
+  font-weight: 400;
+}
+
+// ------ Block: callout ------
+.block-callout {
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--ink-3);
+  padding: 1rem 1.25rem;
+  border-radius: var(--radius);
+  margin: 1rem 0 1.25rem;
+  background: var(--bg-soft);
+  font-size: 1rem;
+
+  &__label {
+    font-weight: 500;
+    text-transform: uppercase;
+    font-size: 1rem;
+    letter-spacing: 0.12em;
+    margin-bottom: 0.5rem;
+    display: flex; align-items: center; gap: 0.45rem;
+  }
+
+  &__body p { margin: 0 0 0.5rem; max-width: none; }
+  &__body p:last-child { margin-bottom: 0; }
+
+  &--tip      { border-left-color: var(--l1); background: var(--l1-soft);
+                .block-callout__label { color: var(--l1); } }
+  &--warning  { border-left-color: var(--warn); background: var(--warn-soft);
+                .block-callout__label { color: var(--warn); } }
+  &--critical { border-left-color: var(--kernel); background: var(--kernel-soft);
+                .block-callout__label { color: var(--kernel); } }
+  &--tr       { border-left-color: var(--tr); background: var(--tr-soft);
+                .block-callout__label { color: var(--tr); } }
+  &--info     { border-left-color: var(--ink-3); background: var(--bg-soft);
+                .block-callout__label { color: var(--ink-3); } }
+}
+
+// ------ Block: list ------
+.block-list { padding-left: 1.25rem; margin: 0 0 1.25rem; }
+.block-list li { margin-bottom: 0.4rem; max-width: 66ch; }
+.block-list li::marker { color: var(--ink-4); }
+
+// ------ Block: feature-list ------
+.block-feature-list {
+  margin: 0 0 1.25rem;
+  &__title { font-size: 1rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--ink-3); font-weight: 500; margin: 0 0 0.6rem; }
+  ul { list-style: none; padding: 0; margin: 0; }
+}
+.feature-list__item {
+  padding: 0.6rem 0.85rem;
+  margin-bottom: 0.4rem;
+  background: var(--bg-soft);
+  border-left: 2px solid var(--line);
+  border-radius: 0 var(--radius) var(--radius) 0;
+  font-size: 1rem;
+
+  &--critical { border-left-color: var(--kernel); background: var(--kernel-soft); }
+}
+.feature-list__tag {
+  display: inline-block;
+  font-size: 1rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  padding: 0.1rem 0.45rem;
+  border-radius: 3px;
+  margin-right: 0.5rem;
+  background: var(--kernel);
+  color: #fff;
+}
+.feature-list__name { font-weight: 500; color: var(--ink); display: inline-flex; align-items: center; gap: 0.4rem; i { color: var(--l1); } }
+.feature-list__desc { display: block; color: var(--ink-3); font-size: 1rem; margin-top: 0.2rem; line-height: 1.55; }
+
+// ------ Block: table ------
+// Tablo bitiş affordance: belirgin border + ayrı yüzey + alt boşluk.
+// Section değişimi sırasında tablo içeriğinin nerede bittiği net olsun.
+.block-table__wrap {
+  overflow-x: auto;
+  margin: 1.25rem 0 2.25rem; // alt boşluk artırıldı — section sınırı için nefes
+  background: var(--bg-softer, var(--bg-soft));
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  box-shadow: 0 1px 0 var(--line);
+
+  // Son satırın alt border'ı yüzeyle birleşince kaybolmasın — wrap zaten kapatıyor
+  // ama tablo sonunda görsel olarak "kapanış çizgisi" hissi için son tr'nin bottom border'ını kaldırıyoruz
+  .block-table tr:last-child td { border-bottom: none; }
+}
+.block-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 1rem;
+  background: var(--bg); // tablo zemini wrap'tan biraz daha açık — kontrast
+
+  caption { caption-side: top; text-align: left; font-style: italic; color: var(--ink-3); margin: 0.5rem 0.95rem 0.4rem; }
+  th, td { text-align: left; padding: 0.75rem 0.95rem; border-bottom: 1px solid var(--line); vertical-align: top; line-height: 1.5; }
+  th {
+    font-weight: 500;
+    background: var(--bg-soft);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-size: 1rem;
+    color: var(--ink-3);
+    border-bottom: 2px solid var(--line); // başlık-içerik ayrımı belirgin
+  }
+  td:first-child { font-weight: 500; color: var(--ink); }
+
+  &--compact th, &--compact td { padding: 0.55rem 0.7rem; font-size: 1rem; }
+}
+
+// ------ Block: grid ------
+.block-grid {
+  display: grid;
+  gap: 1rem;
+  margin: 1rem 0 1.25rem;
+
+  &--cols-2 { grid-template-columns: 1fr 1fr; }
+  &--cols-3 { grid-template-columns: 1fr 1fr 1fr; }
+
+  &__item {
+    padding: 1rem 1.25rem;
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    background: var(--bg-soft);
+
+    &--good { border-left: 3px solid var(--l1); }
+    &--bad  { border-left: 3px solid var(--kernel); }
+  }
+
+  &__title {
+    font-size: 1rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    font-weight: 500;
+    margin: 0 0 0.6rem;
+    display: flex; align-items: center; gap: 0.4rem;
+
+    i { color: var(--l1); font-size: 1.125rem; }
+  }
+
+  &__item--good &__title i { color: var(--l1); }
+  &__item--bad  &__title i { color: var(--kernel); }
+
+  &__body { font-size: 1rem; }
+  &__body p { margin: 0 0 0.5rem; max-width: none; line-height: 1.6; }
+}
+
+// ------ Block: layer-cards ------
+.block-layer-cards {
+  display: grid;
+  grid-template-columns: repeat(var(--cols, 5), 1fr);
+  gap: 1px;
+  background: var(--line);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  overflow: hidden;
+  margin: 1.25rem 0 1.5rem;
+}
+.layer-card {
+  background: var(--bg);
+  padding: 1.1rem 0.95rem;
+
+  &__tag { font-size: 1rem; text-transform: uppercase; letter-spacing: 0.12em; font-weight: 500; margin-bottom: 0.5rem; color: var(--ink-4); }
+  &__name { font-weight: 500; font-size: 1.0625rem; margin-bottom: 0.4rem; color: var(--ink); }
+  &__desc { font-size: 1rem; color: var(--ink-3); line-height: 1.55; }
+
+  &--kernel  { border-top: 3px solid var(--kernel); .layer-card__tag { color: var(--kernel); } }
+  &--scale   { border-top: 3px solid var(--scale);  .layer-card__tag { color: var(--scale); } }
+  &--l1      { border-top: 3px solid var(--l1);     .layer-card__tag { color: var(--l1); } }
+  &--l2      { border-top: 3px solid var(--l2);     .layer-card__tag { color: var(--l2); } }
+  &--l3      { border-top: 3px solid var(--l3);     .layer-card__tag { color: var(--l3); } }
+  &--atomic  { border-top: 3px solid var(--atomic); .layer-card__tag { color: var(--atomic); } }
+}
+
+// ------ Block: examples ------
+.block-examples {
+  background: var(--bg-soft);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 1rem 1.25rem;
+  margin: 1rem 0 1.25rem;
+
+  &__title {
+    font-size: 1rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--ink-3);
+    margin: 0 0 0.7rem;
+    font-weight: 500;
+    display: flex; align-items: center; gap: 0.45rem;
+
+    i { color: var(--l1); font-size: 1.125rem; }
+  }
+
+  ul { padding-left: 1.2rem; margin: 0; font-size: 1rem; }
+  li { margin-bottom: 0.4rem; max-width: none; line-height: 1.55; }
+}
+
+// ------ Block: kv ------
+.block-kv {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 0.6rem 1.25rem;
+  margin: 1rem 0 1.25rem;
+  font-size: 1rem;
+
+  dt { font-weight: 500; color: var(--ink); }
+  dd { margin: 0; color: var(--ink-2); line-height: 1.55; }
+}
+
+// ------ Block: tree ------
+.block-tree {
+  margin: 1rem 0 1.5rem;
+
+  &__title { font-family: 'Roboto Mono', monospace; font-size: 1rem; color: var(--ink-3); margin-bottom: 0.4rem; }
+  &__pre {
+    font-family: 'Roboto Mono', monospace;
+    background: var(--code-bg);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 1.1rem 1.35rem;
+    overflow-x: auto;
+    font-size: 1rem;
+    line-height: 1.65;
+    margin: 0;
+    color: var(--ink);
+
+    .tree__name { font-weight: 500; }
+    .tree__comment { color: var(--ink-4); font-style: italic; }
+  }
+}
+
+// ------ Block: ref-grid ------
+.block-ref-grid {
+  margin: 1rem 0 1.5rem;
+  &__title { font-size: 1rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--ink-3); margin: 0 0 0.6rem; font-weight: 500; }
+  &__items { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 0.6rem; }
+}
+.ref-card {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.7rem 0.95rem;
+  background: var(--bg-soft);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  text-decoration: none;
+  color: var(--ink-2);
+  transition: all 0.12s;
+  font-size: 1rem;
+
+  &:hover { background: var(--bg); color: var(--l1); border-color: var(--l1); }
+
+  &__title { font-weight: 500; flex: 1; }
+  &__group { font-size: 1rem; color: var(--ink-4); font-family: 'Roboto Mono', monospace; }
+  &__arrow { color: var(--ink-4); }
+
+  &--missing { opacity: 0.5; }
+}
+
+// ------ Block: divider ------
+.block-divider { border: 0; border-top: 1px solid var(--line); margin: 3rem 0; }
+
+// ------ Ref inline ------
+.ref {
+  color: var(--l1);
+  text-decoration: none;
+  border-bottom: 1px dotted var(--l1);
+  &--missing { color: var(--ink-4); border-bottom-style: dashed; cursor: help; }
+  &:hover { color: var(--ink); border-bottom-style: solid; }
+}
+.link--external {
+  color: var(--l1);
+  text-decoration: none;
+  &::after { content: " ↗"; font-size: 1rem; }
+  &:hover { text-decoration: underline; }
+}
+
+// ------ Error/loading ------
+.loading {
+  display: flex; align-items: center; gap: 0.5rem;
+  color: var(--ink-3);
+  padding: 2rem;
+  font-size: 1rem;
+
+  .ph-spin { animation: spin 1.2s linear infinite; }
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.block-error {
+  background: var(--kernel-soft);
+  border-left: 3px solid var(--kernel);
+  border-radius: var(--radius);
+  padding: 1rem 1.25rem;
+  color: var(--kernel);
+  font-family: 'Roboto Mono', monospace;
+  font-size: 1rem;
+  margin: 0.5rem 0;
+}
+
+.boot-error {
+  background: var(--kernel-soft);
+  border: 1px solid var(--kernel);
+  border-radius: var(--radius);
+  padding: 2rem;
+  color: var(--ink);
+
+  h2 { margin-top: 0; color: var(--kernel); display: flex; align-items: center; gap: 0.5rem; }
+}
+
+// ============================================================================
+// Enrichment buttons (! / ?) + Popover
+// ============================================================================
+:root {
+  --enrich-info: #1e5fa0;
+  --enrich-detail: #5a2e8a;
+
+  --state-ok:        #1f7a3e;  --state-ok-bg:        #e7f4ec;
+  --state-missing:   #b73a3a;  --state-missing-bg:   #faece9;
+  --state-critical:  #b73a3a;  --state-critical-bg:  #faece9;
+  --state-partial:   #8a4b00;  --state-partial-bg:   #fbf2e6;
+  --state-planned:   #5a2e8a;  --state-planned-bg:   #f1eaf9;
+  --state-wip:       #1e5fa0;  --state-wip-bg:       #e7eef7;
+  --state-blocked:   #6b6b6b;  --state-blocked-bg:   #efefef;
+  --state-deprecated:#9a9a9a;  --state-deprecated-bg:#f5f5f4;
+
+  --gran-kaya:       #2a1f0f;
+  --gran-buyuk-tas:  #4a3b1f;
+  --gran-orta-tas:   #6b5634;
+  --gran-kucuk-tas:  #8a7250;
+  --gran-kum:        #a8916f;
+  --gran-toz:        #c2b193;
+  --gran-atom:       #5a2e8a;
+}
+
+.enrich-btns {
+  display: inline-flex;
+  gap: 0.35rem;
+  margin-left: 0.5rem;
+  vertical-align: middle;
+
+  &--inline { margin-left: 0.4rem; }
+  &--title  { margin-left: 0.7rem; }
+}
+
+.enrich-btn {
+  appearance: none;
+  border: 1.5px solid currentColor;
+  background: var(--bg);
+  color: var(--ink-3);
+  width: 1.75rem;
+  height: 1.75rem;
+  min-width: 1.75rem;
+  border-radius: 999px;
+  padding: 0;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  line-height: 1;
+  vertical-align: middle;
+  transition: transform 120ms ease, background 120ms ease, box-shadow 120ms ease, color 120ms ease;
+  position: relative;
+
+  i { font-size: 1.05rem; line-height: 1; font-weight: 600; }
+
+  // Görünmez hit area genişletmesi (parmak için)
+  &::before {
+    content: '';
+    position: absolute;
+    inset: -8px;
+    border-radius: 999px;
+    z-index: -1;
+  }
+
+  // HOVER: dolu renk, beyaz icon, scale-up, halo
+  &:hover, &:focus-visible {
+    outline: none;
+    transform: scale(1.15);
+    color: var(--bg);
+    i { color: var(--bg); }
+  }
+
+  &--info {
+    color: var(--enrich-info);
+    background: color-mix(in srgb, var(--enrich-info) 10%, var(--bg));
+    &:hover, &:focus-visible {
+      background: var(--enrich-info);
+      box-shadow: 0 0 0 4px color-mix(in srgb, var(--enrich-info) 20%, transparent),
+                  0 3px 10px rgba(30,95,160,0.35);
+    }
+  }
+  &--detail {
+    color: var(--enrich-detail);
+    background: color-mix(in srgb, var(--enrich-detail) 10%, var(--bg));
+    &:hover, &:focus-visible {
+      background: var(--enrich-detail);
+      box-shadow: 0 0 0 4px color-mix(in srgb, var(--enrich-detail) 20%, transparent),
+                  0 3px 10px rgba(90,46,138,0.35);
+    }
+  }
+
+  &[aria-expanded="true"] {
+    background: currentColor;
+    i { color: var(--bg); }
+  }
+}
+
+// Tablolarda iç satır yüksekliğini bozmaması için biraz küçült
+td .enrich-btn, .feature-list__head .enrich-btn {
+  width: 1.5rem; height: 1.5rem; min-width: 1.5rem;
+  i { font-size: 1rem; }
+}
+
+.pop {
+  position: fixed;
+  z-index: 1000;
+  max-width: 32rem;
+  min-width: 14rem;
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 10px 30px rgba(0,0,0,0.10), 0 2px 6px rgba(0,0,0,0.06);
+  font-size: 1rem;
+  line-height: 1.55;
+  color: var(--ink);
+
+  // Hover köprüsü — buton ile popover arasındaki boşlukta da event yakalansın
+  &::after {
+    content: '';
+    position: absolute;
+    left: 0; right: 0;
+    height: 12px;
+  }
+  &[data-placement="bottom"]::after { top: -12px; }
+  &[data-placement="top"]::after    { bottom: -12px; }
+
+  &--info { max-width: 22rem; }
+  &--detail { max-width: 34rem; }
+
+  &__arrow {
+    position: absolute;
+    width: 12px;
+    height: 12px;
+    background: var(--bg);
+    border: 1px solid var(--line);
+    transform: rotate(45deg);
+    top: -7px;
+    border-right: none;
+    border-bottom: none;
+  }
+  &[data-placement="top"] &__arrow {
+    top: auto;
+    bottom: -7px;
+    border-right: 1px solid var(--line);
+    border-bottom: 1px solid var(--line);
+    border-left: none;
+    border-top: none;
+  }
+
+  &__body { padding: 0.85rem 1rem; }
+
+  &__short {
+    color: var(--ink-2);
+    font-weight: 400;
+  }
+
+  &__lead p {
+    margin: 0 0 0.5rem;
+    color: var(--ink);
+    font-weight: 400;
+  }
+
+  &__section {
+    border-top: 1px dashed var(--line);
+    margin-top: 0.6rem;
+    padding-top: 0.6rem;
+
+    h6 {
+      margin: 0 0 0.45rem;
+      font-size: 1rem;
+      font-weight: 500;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--ink-3);
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+      i { color: var(--enrich-detail); }
+    }
+  }
+
+  &__term {
+    padding: 0.4rem 0.5rem;
+    background: var(--bg-soft);
+    border-radius: var(--radius);
+    margin-bottom: 0.35rem;
+    &:last-child { margin-bottom: 0; }
+  }
+  &__abbrev { color: var(--ink); }
+  &__tr { color: var(--ink-3); font-style: italic; }
+  &__meaning { color: var(--ink-2); margin-top: 0.2rem; font-size: 1rem; }
+  &__why { color: var(--ink-3); font-size: 1rem; margin-top: 0.2rem; em { color: var(--enrich-detail); font-style: normal; font-weight: 500; } }
+
+  &__story {
+    padding: 0.5rem 0.6rem;
+    border-left: 2px solid var(--enrich-detail);
+    background: var(--bg-soft);
+    border-radius: 0 var(--radius) var(--radius) 0;
+    margin-bottom: 0.4rem;
+    &:last-child { margin-bottom: 0; }
+  }
+  &__persona {
+    font-weight: 500;
+    color: var(--enrich-detail);
+    font-size: 1rem;
+    display: flex; align-items: center; gap: 0.3rem;
+    margin-bottom: 0.25rem;
+    i { color: var(--enrich-detail); }
+  }
+  &__context { color: var(--ink-2); font-size: 1rem; }
+  &__outcome {
+    color: var(--ink); font-size: 1rem; margin-top: 0.2rem;
+    display: flex; gap: 0.3rem; align-items: flex-start;
+    i { color: var(--state-ok); margin-top: 4px; }
+  }
+}
+
+// ============================================================================
+// State chips
+// ============================================================================
+// Difficulty + read + updated chip — cluster metadata UI
+.diff-chip, .read-chip, .updated-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 1rem;
+  font-weight: 400;
+  padding: 0.1rem 0.55rem;
+  border-radius: 999px;
+  background: var(--bg-soft);
+  color: var(--ink-3);
+  border: 1px solid var(--line);
+  white-space: nowrap;
+  i { font-size: 1rem; }
+}
+.diff-chip {
+  &--baslangic { color: var(--state-ok, #1e7d33); border-color: color-mix(in srgb, var(--state-ok, #1e7d33) 35%, transparent); background: color-mix(in srgb, var(--state-ok, #1e7d33) 8%, var(--bg-soft)); }
+  &--orta      { color: var(--state-wip, #b08000); border-color: color-mix(in srgb, var(--state-wip, #b08000) 35%, transparent); background: color-mix(in srgb, var(--state-wip, #b08000) 8%, var(--bg-soft)); }
+  &--ileri     { color: var(--state-critical, #b73a3a); border-color: color-mix(in srgb, var(--state-critical, #b73a3a) 35%, transparent); background: color-mix(in srgb, var(--state-critical, #b73a3a) 8%, var(--bg-soft)); }
+}
+:root[data-theme="dark"] {
+  .diff-chip, .read-chip, .updated-chip {
+    background: var(--bg-soft);
+    color: var(--ink-2);
+    border-color: var(--line);
+  }
+}
+
+.state-chip {
+  display: inline-flex;
+  align-items: center;
+  font-size: 1rem;
+  font-weight: 500;
+  padding: 0.1rem 0.5rem;
+  border-radius: 999px;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+
+  &--ok        { color: var(--state-ok);        background: var(--state-ok-bg); }
+  &--missing   { color: var(--state-missing);   background: var(--state-missing-bg); }
+  &--critical  { color: var(--state-critical);  background: var(--state-critical-bg); }
+  &--partial   { color: var(--state-partial);   background: var(--state-partial-bg); }
+  &--planned   { color: var(--state-planned);   background: var(--state-planned-bg); }
+  &--wip       { color: var(--state-wip);       background: var(--state-wip-bg); }
+  &--blocked   { color: var(--state-blocked);   background: var(--state-blocked-bg); }
+  &--deprecated{ color: var(--state-deprecated);background: var(--state-deprecated-bg); }
+}
+
+// row coloring
+tr.tr--state-critical td:first-child { box-shadow: inset 3px 0 0 var(--state-critical); }
+tr.tr--state-missing  td:first-child { box-shadow: inset 3px 0 0 var(--state-missing); }
+tr.tr--state-ok       td:first-child { box-shadow: inset 3px 0 0 var(--state-ok); }
+tr.tr--state-partial  td:first-child { box-shadow: inset 3px 0 0 var(--state-partial); }
+tr.tr--state-planned  td:first-child { box-shadow: inset 3px 0 0 var(--state-planned); }
+tr.tr--state-wip      td:first-child { box-shadow: inset 3px 0 0 var(--state-wip); }
+
+// ============================================================================
+// Granularity chips
+// ============================================================================
+.gran-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 1rem;
+  font-weight: 400;
+  padding: 0.1rem 0.55rem;
+  border-radius: 999px;
+  background: var(--bg-softer);
+  color: var(--ink-2);
+  border: 1px solid var(--line);
+
+  i { font-size: 1rem; }
+  &__sp {
+    margin-left: 0.3rem; padding-left: 0.4rem;
+    border-left: 1px solid var(--line);
+    color: var(--ink-3); font-size: 1rem;
+  }
+  &--kaya        { color: var(--gran-kaya);        border-color: var(--gran-kaya); }
+  &--buyuk-tas   { color: var(--gran-buyuk-tas);   border-color: var(--gran-buyuk-tas); }
+  &--orta-tas    { color: var(--gran-orta-tas);    border-color: var(--gran-orta-tas); }
+  &--kucuk-tas   { color: var(--gran-kucuk-tas);   border-color: var(--gran-kucuk-tas); }
+  &--kum         { color: var(--gran-kum);         border-color: var(--gran-kum); }
+  &--toz         { color: var(--gran-toz);         border-color: var(--gran-toz); }
+  &--atom        { color: var(--gran-atom);        border-color: var(--gran-atom); }
+}
+
+// ============================================================================
+// Mini filter (feature-list + table)
+// ============================================================================
+.mini-filter {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  flex-wrap: wrap;
+  padding: 0.5rem 0.6rem;
+  margin: 0 0 0.75rem;
+  background: var(--bg-soft);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+
+  &__chips { display: flex; gap: 0.3rem; flex-wrap: wrap; }
+  &__search {
+    display: flex; align-items: center; gap: 0.35rem;
+    border: 1px solid var(--line);
+    background: var(--bg);
+    border-radius: var(--radius);
+    padding: 0.15rem 0.5rem;
+    color: var(--ink-3);
+    flex: 1;
+    min-width: 12rem;
+    input {
+      border: 0; outline: 0; background: transparent;
+      font: inherit; color: var(--ink); flex: 1;
+      font-size: 1rem;
+    }
+  }
+}
+
+.chip--xs {
+  font-size: 1rem;
+  padding: 0.15rem 0.55rem;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: var(--bg);
+  color: var(--ink-2);
+  cursor: pointer;
+  font-weight: 400;
+  &.chip--active {
+    background: var(--ink);
+    color: var(--bg);
+    border-color: var(--ink);
+  }
+}
+
+// ============================================================================
+// Cluster meta row (granularity + state at top of cluster)
+// ============================================================================
+.cluster__meta-row {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-top: 0.5rem;
+}
+
+// ============================================================================
+// Feature list — head row
+// ============================================================================
+.feature-list__head {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.25rem;
+}
+
+// ============================================================================
+// Granularity legend block
+// ============================================================================
+.block-gran-legend {
+  margin: 1.5rem 0;
+  padding: 1rem 1.1rem 1.2rem;
+  background: var(--bg-soft);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+
+  &__title {
+    margin: 0 0 0.4rem;
+    font-size: 1.05rem;
+    font-weight: 500;
+    color: var(--ink);
+    display: flex; align-items: center; gap: 0.4rem;
+    i { color: var(--atomic); }
+  }
+  &__intro {
+    margin: 0 0 0.9rem;
+    color: var(--ink-2);
+    font-size: 1rem;
+  }
+}
+
+.gran-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 0.6rem;
+
+  &__item {
+    border: 1px solid var(--line);
+    background: var(--bg);
+    border-radius: var(--radius);
+    padding: 0.65rem 0.75rem;
+
+    &--kaya       { border-left: 3px solid var(--gran-kaya); }
+    &--buyuk-tas  { border-left: 3px solid var(--gran-buyuk-tas); }
+    &--orta-tas   { border-left: 3px solid var(--gran-orta-tas); }
+    &--kucuk-tas  { border-left: 3px solid var(--gran-kucuk-tas); }
+    &--kum        { border-left: 3px solid var(--gran-kum); }
+    &--toz        { border-left: 3px solid var(--gran-toz); }
+    &--atom       { border-left: 3px solid var(--gran-atom); }
+  }
+  &__head {
+    display: flex; align-items: baseline; gap: 0.4rem;
+    margin-bottom: 0.3rem;
+    i { font-size: 1.1rem; align-self: center; }
+  }
+  &__label { font-weight: 500; color: var(--ink); }
+  &__sp {
+    margin-left: auto;
+    font-size: 1rem; color: var(--ink-3);
+    padding: 0.05rem 0.4rem;
+    background: var(--bg-soft);
+    border-radius: 999px;
+  }
+  &__desc {
+    font-size: 1rem;
+    color: var(--ink-2);
+    line-height: 1.5;
+  }
+}
+
+// ============================================================================
+// User-stories block
+// ============================================================================
+.block-stories {
+  margin: 1.25rem 0;
+  &__title {
+    margin: 0 0 0.5rem;
+    font-size: 1rem; font-weight: 500;
+    display: flex; align-items: center; gap: 0.4rem;
+    color: var(--ink); i { color: var(--enrich-detail); }
+  }
+}
+.story-card {
+  padding: 0.75rem 0.9rem;
+  border-left: 3px solid var(--enrich-detail);
+  background: var(--bg-soft);
+  border-radius: 0 var(--radius) var(--radius) 0;
+  margin-bottom: 0.5rem;
+
+  &__persona {
+    font-weight: 500;
+    color: var(--enrich-detail);
+    margin-bottom: 0.35rem;
+    display: flex; align-items: center; gap: 0.3rem;
+  }
+  &__context, &__outcome {
+    font-size: 1rem;
+    color: var(--ink-2);
+    margin-bottom: 0.25rem;
+    line-height: 1.55;
+  }
+  &__outcome { color: var(--ink); }
+  &__tag {
+    display: inline-block;
+    font-size: 1rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    padding: 0.05rem 0.4rem;
+    margin-right: 0.4rem;
+    background: var(--bg);
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    color: var(--ink-3);
+    font-weight: 500;
+    vertical-align: middle;
+    &--out { color: var(--state-ok); border-color: var(--state-ok); }
+  }
+}
+
+// ============================================================================
+// Terms block
+// ============================================================================
+.block-terms {
+  margin: 1.25rem 0;
+  &__title {
+    margin: 0 0 0.5rem;
+    font-size: 1rem; font-weight: 500;
+    display: flex; align-items: center; gap: 0.4rem;
+    i { color: var(--enrich-detail); }
+  }
+  &__dl {
+    display: grid;
+    grid-template-columns: minmax(10rem, max-content) 1fr;
+    gap: 0.4rem 1rem;
+    margin: 0;
+    dt {
+      color: var(--ink);
+      font-weight: 400;
+    }
+    dd {
+      margin: 0;
+      color: var(--ink-2);
+      font-size: 1rem;
+    }
+  }
+}
+.term__abbrev { color: var(--ink-3); font-weight: 400; }
+.term__tr { color: var(--ink-4); font-style: italic; }
+.term__why { color: var(--ink-3); font-size: 1rem; margin-top: 0.15rem; em { color: var(--enrich-detail); font-style: normal; font-weight: 500; } }
+
+// ============================================================================
+// Sidebar — granularity legend mini
+// ============================================================================
+.sidebar__gran-legend {
+  margin-top: auto;
+  padding-top: 1rem;
+  border-top: 1px dashed var(--line);
+  font-size: 1rem;
+  color: var(--ink-3);
+
+  &__title {
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    font-size: 1rem;
+    color: var(--ink-3);
+    margin-bottom: 0.4rem;
+  }
+  &__row {
+    display: flex; align-items: center; gap: 0.35rem;
+    margin-bottom: 0.18rem;
+    i { width: 1rem; text-align: center; }
+  }
+  &__dot {
+    width: 0.55rem; height: 0.55rem; border-radius: 50%;
+  }
+}
+
+// ============================================================================
+// Lesson header — eğitim ünitesi başlığı
+// ============================================================================
+:root {
+  --edu: #0f5f5c;
+  --edu-soft: #e7f1f0;
+  --edu-accent: #b78f00;
+}
+
+.lesson-header {
+  margin: 1.25rem 0 1.5rem;
+  padding: 1.1rem 1.25rem 1.25rem;
+  background: var(--edu-soft);
+  border: 1px solid color-mix(in srgb, var(--edu) 30%, transparent);
+  border-radius: var(--radius-lg);
+  border-left: 4px solid var(--edu);
+
+  &__top {
+    display: flex; gap: 0.6rem; align-items: center; flex-wrap: wrap;
+    margin-bottom: 0.35rem;
+  }
+  &__unit {
+    font-size: 1rem;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    color: var(--edu);
+    font-weight: 500;
+  }
+  &__level {
+    font-size: 1rem;
+    padding: 0.1rem 0.5rem;
+    border-radius: 999px;
+    font-weight: 500;
+    &--baslangic { background: var(--state-ok-bg); color: var(--state-ok); }
+    &--orta { background: var(--state-wip-bg); color: var(--state-wip); }
+    &--ileri { background: var(--state-critical-bg); color: var(--state-critical); }
+  }
+  &__time {
+    font-size: 1rem;
+    color: var(--ink-3);
+    display: inline-flex; align-items: center; gap: 0.25rem;
+  }
+  &__title {
+    margin: 0 0 0.5rem;
+    font-size: 1.5rem;
+    font-weight: 400;
+    color: var(--ink);
+    letter-spacing: -0.01em;
+  }
+  &__prereq {
+    font-size: 1rem;
+    color: var(--ink-2);
+    margin: 0.4rem 0;
+    strong { color: var(--ink); font-weight: 500; margin-right: 0.3rem; }
+    a { color: var(--edu); text-decoration: none; border-bottom: 1px dashed currentColor; }
+  }
+  &__goals {
+    margin-top: 0.6rem;
+    padding-top: 0.6rem;
+    border-top: 1px dashed color-mix(in srgb, var(--edu) 25%, transparent);
+    &-title {
+      font-weight: 500;
+      color: var(--edu);
+      margin-bottom: 0.3rem;
+      font-size: 1rem;
+      i { margin-right: 0.25rem; }
+    }
+    ul {
+      margin: 0; padding-left: 1.25rem;
+      li { color: var(--ink-2); font-size: 1rem; line-height: 1.55; }
+    }
+  }
+}
+
+// ============================================================================
+// Steps (sıralı anlatım)
+// ============================================================================
+.block-steps {
+  margin: 1.25rem 0;
+  &__title {
+    margin: 0 0 0.6rem;
+    font-size: 1rem; font-weight: 500;
+    display: flex; align-items: center; gap: 0.4rem;
+    i { color: var(--edu); }
+  }
+}
+.steps {
+  list-style: none; padding: 0; margin: 0;
+}
+.step {
+  display: grid;
+  grid-template-columns: 2.5rem 1fr;
+  gap: 0.75rem;
+  margin-bottom: 0.65rem;
+  &__num {
+    background: var(--edu);
+    color: var(--bg);
+    border-radius: 999px;
+    width: 2rem; height: 2rem;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 500;
+    font-size: 1rem;
+  }
+  &__title {
+    font-weight: 500;
+    color: var(--ink);
+    margin-bottom: 0.2rem;
+    display: flex; align-items: center; gap: 0.35rem;
+    i { color: var(--edu); }
+  }
+  &__body {
+    color: var(--ink-2);
+    line-height: 1.6;
+    font-size: 1rem;
+  }
+}
+
+// ============================================================================
+// Checklist (sınav değil — pratik kontrol)
+// ============================================================================
+.block-checklist {
+  margin: 1.25rem 0;
+  padding: 0.85rem 1rem 0.9rem;
+  background: var(--bg-soft);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+
+  &__head {
+    display: flex; align-items: center; gap: 0.4rem;
+    margin-bottom: 0.5rem;
+    i { color: var(--state-ok); }
+  }
+  &__progress {
+    margin-left: auto;
+    font-size: 1rem;
+    color: var(--ink-3);
+    padding: 0.1rem 0.6rem;
+    background: var(--bg);
+    border-radius: 999px;
+    border: 1px solid var(--line);
+    position: relative;
+    overflow: hidden;
+    &::before {
+      content: '';
+      position: absolute;
+      left: 0; top: 0; bottom: 0;
+      width: var(--pct, 0%);
+      background: var(--state-ok-bg);
+      z-index: 0;
+    }
+    & { position: relative; z-index: 1; }
+  }
+}
+.checklist {
+  list-style: none; padding: 0; margin: 0;
+}
+.checklist__item {
+  display: grid;
+  grid-template-columns: 1.25rem 1fr;
+  gap: 0.5rem;
+  align-items: flex-start;
+  padding: 0.3rem 0;
+  border-bottom: 1px dashed var(--line-2);
+  &:last-child { border-bottom: none; }
+
+  input[type="checkbox"] {
+    accent-color: var(--state-ok);
+    width: 1.05rem; height: 1.05rem;
+    margin-top: 0.2rem;
+    cursor: pointer;
+  }
+  &--done .checklist__label {
+    color: var(--ink-3);
+    text-decoration: line-through;
+    text-decoration-color: var(--state-ok);
+  }
+  &--optional .checklist__label .checklist__opt {
+    color: var(--ink-4);
+    font-size: 1rem;
+  }
+}
+.checklist__label {
+  cursor: pointer;
+  color: var(--ink);
+  line-height: 1.5;
+}
+.checklist__hint {
+  grid-column: 2;
+  font-size: 1rem;
+  color: var(--ink-3);
+  margin-top: 0.15rem;
+}
+
+// ============================================================================
+// Detail Panel — yalnız iç tipografi/placeholder. Konumlanma LAYOUT FINAL'de.
+// ============================================================================
+.detail-panel {
+  &__inner {
+    position: relative;
+    font-size: 1rem;
+  }
+
+  &__placeholder {
+    text-align: center;
+    padding: 3rem 1.5rem 2rem;
+    color: var(--ink-3);
+
+    i {
+      font-size: 3rem;
+      color: var(--enrich-detail);
+      opacity: 0.55;
+      display: block;
+      margin-bottom: 0.85rem;
+    }
+    &-title {
+      font-size: 1.1rem;
+      font-weight: 500;
+      color: var(--ink-2);
+      margin-bottom: 0.5rem;
+    }
+    p {
+      margin: 0;
+      line-height: 1.6;
+      max-width: 32ch;
+      margin-inline: auto;
+      strong { color: var(--ink-2); font-weight: 500; }
+    }
+  }
+}
+
+.dp {
+  &__close {
+    position: absolute;
+    top: -0.25rem;
+    right: -0.25rem;
+    background: var(--bg);
+    border: 1px solid var(--line);
+    width: 2rem;
+    height: 2rem;
+    border-radius: 999px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--ink-3);
+    transition: all 120ms ease;
+    &:hover {
+      background: var(--ink);
+      color: var(--bg);
+      border-color: var(--ink);
+    }
+    i { font-size: 1rem; }
+  }
+
+  &__head {
+    border-bottom: 1px solid var(--line-2);
+    padding-bottom: 1rem;
+    margin-bottom: 1.25rem;
+  }
+  &__context {
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    font-size: 1rem;
+    color: var(--enrich-detail);
+    font-weight: 500;
+    margin-bottom: 0.4rem;
+  }
+  &__title {
+    font-size: 1.5rem;
+    font-weight: 400;
+    color: var(--ink);
+    margin: 0 0 0.4rem;
+    letter-spacing: -0.01em;
+    line-height: 1.25;
+  }
+  &__summary {
+    color: var(--ink-2);
+    margin: 0;
+    font-size: 1rem;
+    line-height: 1.55;
+  }
+
+  &__section {
+    margin-bottom: 1.5rem;
+    &:last-child { margin-bottom: 0; }
+
+    h4 {
+      margin: 0 0 0.65rem;
+      font-size: 1rem;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--enrich-detail);
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      i { font-size: 1rem; }
+    }
+  }
+
+  &__detail {
+    p {
+      color: var(--ink-2);
+      line-height: 1.7;
+      margin: 0 0 0.7rem;
+      &:last-child { margin-bottom: 0; }
+    }
+    code {
+      font-family: 'Roboto Mono', monospace;
+      background: var(--code-bg);
+      padding: 0.12rem 0.4rem;
+      border-radius: 4px;
+      font-size: 1rem;
+    }
+    strong { color: var(--ink); font-weight: 500; }
+  }
+
+  // Terms
+  &__terms { display: flex; flex-direction: column; gap: 0.55rem; }
+  &__term {
+    padding: 0.7rem 0.85rem;
+    background: color-mix(in srgb, var(--enrich-detail) 4%, var(--bg));
+    border: 1px solid color-mix(in srgb, var(--enrich-detail) 20%, transparent);
+    border-radius: var(--radius);
+    &-head { margin-bottom: 0.25rem; }
+    &-abbrev { color: var(--ink-3); margin-left: 0.3rem; }
+    &-tr { color: var(--ink-4); font-style: italic; margin-left: 0.25rem; font-size: 1rem; }
+    &-meaning { color: var(--ink-2); font-size: 1rem; line-height: 1.55; }
+    &-why {
+      margin-top: 0.35rem;
+      color: var(--ink-3);
+      font-size: 1rem;
+      line-height: 1.5;
+      span { color: var(--enrich-detail); font-weight: 500; }
+    }
+  }
+
+  // Stories
+  &__stories { display: flex; flex-direction: column; gap: 0.7rem; }
+  &__story {
+    padding: 0.85rem 0.95rem;
+    background: var(--bg-soft);
+    border-left: 3px solid var(--enrich-detail);
+    border-radius: 0 var(--radius) var(--radius) 0;
+    &-persona {
+      font-weight: 500;
+      color: var(--enrich-detail);
+      margin-bottom: 0.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+    }
+    &-context, &-outcome {
+      font-size: 1rem;
+      line-height: 1.6;
+      margin-bottom: 0.3rem;
+      color: var(--ink-2);
+    }
+    &-outcome { color: var(--ink); margin-bottom: 0; }
+    &-tag {
+      display: inline-block;
+      font-size: 1rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      padding: 0.08rem 0.45rem;
+      margin-right: 0.4rem;
+      background: var(--bg);
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      color: var(--ink-3);
+      vertical-align: middle;
+      &--out { color: var(--state-ok); border-color: var(--state-ok); }
+    }
+  }
+
+  // Empty state (içerik az ise)
+  &__empty {
+    text-align: center;
+    padding: 1rem 0.5rem;
+    color: var(--ink-3);
+    font-size: 1rem;
+    border-top: 1px dashed var(--line);
+
+    i {
+      font-size: 1.75rem;
+      color: var(--ink-4);
+      display: block;
+      margin-bottom: 0.5rem;
+    }
+    p { margin: 0 0 0.5rem; line-height: 1.55; }
+    p:last-child { margin-bottom: 0; }
+    strong { color: var(--ink-2); }
+    code {
+      font-family: 'Roboto Mono', monospace;
+      background: var(--bg-soft);
+      padding: 0.05rem 0.35rem;
+      border-radius: 4px;
+      font-size: 1rem;
+    }
+    &-hint { color: var(--ink-4); font-size: 1rem; }
+  }
+
+  // 5N1K — MASTER vertical stack (label üstte, value altta) — her ekranda
+  &__5n1k {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+  }
+  &__5n1k-row {
+    display: block !important;
+    grid-template-columns: none !important;
+    padding: var(--space-3) var(--space-4);
+    background: var(--bg-soft);
+    border-left: 3px solid var(--enrich-detail);
+    border-radius: 0 var(--radius-md) var(--radius-md) 0;
+  }
+  &__5n1k-key {
+    display: flex;
+    align-items: center;
+    gap: var(--space-1);
+    font-weight: 500;
+    color: var(--enrich-detail);
+    font-size: 1rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: var(--space-2);
+    i { font-size: 1rem; }
+  }
+  &__5n1k-val {
+    display: block;
+    color: var(--ink-2);
+    line-height: 1.6;
+    font-size: 1rem;
+  }
+
+  // Frontend / Backend kullanım
+  &__side {
+    padding: 0.85rem 0.95rem;
+    border-radius: var(--radius);
+    border: 1px solid var(--line);
+    &--fe { background: color-mix(in srgb, var(--state-wip) 5%, var(--bg)); border-color: color-mix(in srgb, var(--state-wip) 22%, transparent); }
+    &--be { background: color-mix(in srgb, var(--atomic) 5%, var(--bg)); border-color: color-mix(in srgb, var(--atomic) 22%, transparent); }
+  }
+  &__side-row { line-height: 1.55; margin-bottom: 0.4rem; font-size: 1rem; color: var(--ink-2);
+    &:last-child { margin-bottom: 0; }
+  }
+  &__side-label { font-weight: 500; color: var(--ink); margin-right: 0.35rem; }
+
+  // Refs
+  &__refs { display: flex; flex-direction: column; gap: 0.3rem; }
+  &__ref {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.45rem 0.65rem;
+    background: var(--bg-soft);
+    border-radius: var(--radius);
+    color: var(--ink-2);
+    text-decoration: none;
+    font-size: 1rem;
+    transition: all 120ms ease;
+    i { color: var(--enrich-detail); }
+    &:hover {
+      background: color-mix(in srgb, var(--enrich-detail) 8%, var(--bg-soft));
+      color: var(--ink);
+      transform: translateX(2px);
+    }
+  }
+}
+
+// ============================================================================
+// Clickable kart estetiği — is-clickable + is-detail-active
+// ============================================================================
+.is-clickable {
+  cursor: pointer;
+  transition: background 140ms ease, border-color 140ms ease, transform 140ms ease, box-shadow 140ms ease;
+  position: relative;
+
+  &:hover {
+    background: color-mix(in srgb, var(--enrich-detail) 4%, var(--bg-soft)) !important;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+  }
+  &:focus-visible {
+    outline: 2px solid var(--enrich-detail);
+    outline-offset: 2px;
+  }
+  &::after {
+    content: '\f061'; // ph-arrow-right
+    font-family: 'Phosphor';
+    position: absolute;
+    right: 0.75rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--ink-4);
+    opacity: 0;
+    transition: opacity 120ms ease, transform 120ms ease;
+    font-size: 1rem;
+  }
+  &:hover::after, &.is-detail-active::after {
+    opacity: 1;
+    transform: translateY(-50%) translateX(2px);
+    color: var(--enrich-detail);
+  }
+}
+
+.is-detail-active {
+  background: color-mix(in srgb, var(--enrich-detail) 8%, var(--bg-soft)) !important;
+  box-shadow: inset 3px 0 0 var(--enrich-detail);
+}
+
+// Block-kv: title ÜSTTE, description ALTTA — master key-value card pattern
+.block-kv {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  margin: var(--space-4) 0;
+
+  &__pair {
+    display: block !important;
+    grid-template-columns: none !important;
+    padding: var(--space-3) var(--space-4) !important;
+    background: var(--bg);
+    border: 1px solid var(--card-border);
+    border-radius: var(--radius-md);
+
+    dt {
+      display: block;
+      color: var(--ink);
+      font-weight: 500;
+      margin: 0 0 var(--space-2);
+      padding: 0;
+    }
+    dd {
+      display: block;
+      color: var(--ink-2);
+      margin: 0;
+      padding: 0;
+      line-height: 1.65;
+      font-size: 1rem;
+    }
+
+    &.is-clickable { position: relative; }
+  }
+}
+
+// Tablo satırı tıklanır görünüm
+tr.is-clickable {
+  cursor: pointer;
+  &:hover { background: color-mix(in srgb, var(--enrich-detail) 4%, transparent); }
+  &.is-detail-active { background: color-mix(in srgb, var(--enrich-detail) 10%, transparent); }
+}
+
+// Callout clickable
+.block-callout.is-clickable { cursor: pointer; }
+.block-callout.is-clickable:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+
+// ============================================================================
+// UI Padding & Spacing genel revizyon — nefes alma
+// ============================================================================
+
+// Cluster bloku — eski cömert boşluk kuralı LEGACY (v2 redesign tarafından override edilecek).
+// Padding/margin v2'de header/body içine taşındı; burada sadece tipografi kuralları kaldı.
+.cluster {
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--line-2);
+
+  &__title {
+    font-size: 1.85rem !important;
+    line-height: 1.25;
+    letter-spacing: -0.015em;
+  }
+  &__subtitle {
+    font-size: 1.05rem;
+    margin-top: 0.85rem;
+    line-height: 1.6;
+  }
+  &__tags { margin-top: 0.85rem; gap: 0.5rem; }
+  &__meta-row { margin-top: 0.85rem; gap: 0.65rem; }
+}
+
+// Heading'ler — üstüne ekstra boşluk
+.block-heading {
+  margin-top: var(--space-6);
+  margin-bottom: var(--space-3);
+  line-height: 1.3;
+  padding: 0;
+
+  &--l4 { margin-top: var(--space-6); font-size: 1.2rem; }
+  &--l3 { margin-top: var(--space-7); font-size: 1.45rem; }
+  &--l2 { margin-top: var(--space-8); font-size: 1.65rem; }
+
+  // Heading clickable — sadece cursor + ince text rengi shift; bant YOK
+  &.is-clickable {
+    padding: 0 !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    background: transparent !important;
+    border-radius: 0 !important;
+    transition: color 120ms ease;
+  }
+  &.is-clickable:hover {
+    background: transparent !important;
+    box-shadow: none !important;
+    color: var(--enrich-detail);
+  }
+  &.is-clickable::after { display: none !important; } // ok ipucu yok
+}
+
+// Paragraph clickable — sadece subtle hover, bant yok
+.block-paragraph {
+  margin: var(--space-3) 0;
+  line-height: 1.7;
+  padding: 0;
+  &.is-clickable {
+    padding: 0 !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    background: transparent !important;
+    border-radius: 0 !important;
+  }
+  &.is-clickable:hover {
+    background: transparent !important;
+    box-shadow: none !important;
+    color: var(--enrich-detail);
+  }
+  &.is-clickable::after { display: none !important; }
+  &.is-detail-active {
+    background: transparent !important;
+    box-shadow: inset 3px 0 0 var(--enrich-detail) !important;
+    padding-left: var(--space-3) !important;
+  }
+}
+
+// Paragraph
+.block-paragraph {
+  margin: 1rem 0;
+  line-height: 1.75;
+  padding: 0.15rem 0;
+
+  &.is-clickable {
+    padding: 0.6rem 0.85rem;
+    margin-left: -0.85rem;
+    margin-right: -0.85rem;
+    border-radius: var(--radius);
+  }
+}
+
+// Block list — tıklanır karta dönüşen item'larda madde işareti yok
+.block-list {
+  margin: 1rem 0 1.25rem;
+  padding-left: 1.5rem;
+  list-style: disc;
+
+  li {
+    padding: 0.45rem 0;
+    line-height: 1.7;
+    margin-bottom: 0.2rem;
+  }
+  // Tıklanır item kart olur: bullet kaldır, padding-left'i sıfırla
+  &:has(li.is-clickable) {
+    padding-left: 0;
+    list-style: none;
+  }
+  li.is-clickable {
+    padding: 0.85rem 1.1rem;
+    margin: 0.35rem 0;
+    line-height: 1.6;
+    list-style: none;
+    background: var(--bg-soft);
+    border: 1px solid var(--line-2);
+    border-radius: var(--radius);
+
+    &::marker { content: ''; display: none; }
+  }
+}
+
+// Detail panel içindeki stories listesinde de bullet yok
+.dp__stories, .dp__terms, .dp__refs { list-style: none; padding: 0; }
+
+// Feature list — cömert kart
+.feature-list {
+  gap: 0.55rem;
+
+  &__item {
+    padding: 1.1rem 1.25rem 1.2rem !important;
+    line-height: 1.6;
+  }
+  &__head { gap: 0.65rem; margin-bottom: 0.4rem; }
+  &__desc { margin-top: 0.45rem; line-height: 1.65; }
+  &__name { font-size: 1.02rem; }
+}
+
+// KV row pair
+.block-kv {
+  gap: 0.4rem !important;
+  margin: 1.25rem 0 1.5rem;
+
+  &__pair {
+    padding: 0.85rem 1.1rem !important;
+    line-height: 1.65;
+
+    dt { padding-top: 0.05rem; }
+    dd { padding-top: 0.05rem; }
+  }
+}
+
+// Callout
+.block-callout {
+  padding: 1.1rem 1.25rem 1.2rem !important;
+  margin: 1.25rem 0 1.5rem;
+  line-height: 1.65;
+
+  &__label { margin-bottom: 0.65rem; gap: 0.45rem; }
+  &__body p { margin: 0.5rem 0; line-height: 1.65; }
+}
+
+// Examples block
+.block-examples {
+  margin: 1.25rem 0 1.5rem;
+  padding: 1.1rem 1.25rem 1.25rem;
+  background: var(--bg-soft);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--line-2);
+
+  &__title { margin-bottom: 0.85rem; padding: 0; }
+  ul { margin: 0; padding-left: 1.25rem; }
+  li {
+    padding: 0.5rem 0;
+    line-height: 1.65;
+  }
+}
+
+// Grid items
+.block-grid {
+  gap: 0.85rem !important;
+  margin: 1.25rem 0 1.5rem;
+
+  &__item {
+    padding: 1.25rem 1.35rem !important;
+    line-height: 1.6;
+  }
+  &__title { margin-bottom: 0.65rem; font-size: 1.05rem; }
+  &__body { line-height: 1.65; }
+}
+
+// Tables
+.block-table {
+  margin: 0.5rem 0 0;
+
+  th, td { padding: 0.85rem 1rem !important; line-height: 1.55; }
+  thead th { padding: 0.95rem 1rem !important; }
+}
+.block-table__wrap { margin: 1.25rem 0 2.25rem; }
+
+// Layer cards
+.block-layer-cards { gap: 1rem !important; margin: 1.5rem 0; }
+.layer-card {
+  padding: 1.25rem 1.35rem !important;
+  line-height: 1.55;
+
+  &__tag { margin-bottom: 0.45rem; }
+  &__name { margin-bottom: 0.5rem; }
+  &__desc { line-height: 1.6; }
+}
+
+// ============================================================================
+// Detail Panel — daha ferah, daha okunaklı
+// ============================================================================
+.detail-panel { padding: var(--space-4) var(--space-4) var(--space-6) !important; }
+
+.dp {
+  &__head {
+    padding-bottom: 1.25rem !important;
+    margin-bottom: 1.5rem !important;
+  }
+  &__title { line-height: 1.3; padding-bottom: 0.1rem; }
+  &__summary { margin-top: 0.5rem; line-height: 1.65; }
+
+  &__section { margin-bottom: 1.85rem !important; }
+  &__section h4 { margin-bottom: 0.85rem !important; }
+
+  &__detail p { line-height: 1.75 !important; margin-bottom: 0.85rem !important; }
+
+  // Term cards — ayrı ayrı belirgin
+  &__terms { gap: 0.7rem !important; }
+  &__term {
+    padding: 0.95rem 1.05rem !important;
+    line-height: 1.6;
+
+    &-head { margin-bottom: 0.45rem !important; }
+    &-meaning { margin-top: 0.35rem; line-height: 1.6; }
+    &-why { margin-top: 0.55rem; line-height: 1.55; }
+  }
+
+  // Story cards
+  &__stories { gap: 0.85rem !important; }
+  &__story {
+    padding: 1rem 1.15rem !important;
+    line-height: 1.6;
+
+    &-persona { margin-bottom: 0.6rem; }
+    &-context, &-outcome { margin-bottom: 0.4rem; line-height: 1.65; }
+  }
+
+  // Refs
+  &__refs { gap: 0.4rem !important; }
+  &__ref { padding: 0.65rem 0.85rem !important; line-height: 1.5; }
+
+  // Empty state
+  &__empty { padding: 1.5rem 0.5rem !important; line-height: 1.65; }
+}
+
+// Terms block (cluster içinde) — TEK SÜTUN stack, başlık üstte, açıklama altta
+.block-terms {
+  margin: var(--space-5) 0 var(--space-6);
+  padding: var(--space-5) var(--space-5) var(--space-6);
+  background: var(--bg-soft);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--line-2);
+
+  &__title { margin-bottom: var(--space-4); padding: 0; }
+
+  // Parent — vertical stack
+  &__dl {
+    display: flex !important;
+    flex-direction: column !important;
+    grid-template-columns: none !important;
+    gap: var(--space-3) !important;
+    margin: 0;
+    padding: 0;
+  }
+
+  // Her terim kartı — başlık üstte, açıklama altta
+  &__pair {
+    display: block !important;
+    grid-template-columns: none !important;
+    background: var(--bg);
+    border: 1px solid var(--card-border);
+    border-radius: var(--radius-md);
+    padding: var(--space-3) var(--space-4) !important;
+    gap: 0 !important;
+
+    dt {
+      display: block;
+      margin: 0 0 var(--space-2);
+      padding: 0;
+      color: var(--ink);
+      font-weight: 500;
+      strong { font-weight: 600; }
+    }
+    dd {
+      display: block;
+      margin: 0;
+      padding: 0;
+      color: var(--ink-2);
+      line-height: 1.65;
+      font-size: 1rem;
+    }
+  }
+
+  // Geniş ekranda 2 sütunlu grid (tablet+)
+  @media (min-width: 980px) {
+    &__dl { display: grid !important; grid-template-columns: repeat(2, 1fr) !important; gap: var(--space-3) !important; flex-direction: unset; }
+  }
+  @media (min-width: 1280px) {
+    &__dl { grid-template-columns: repeat(2, 1fr) !important; }
+  }
+}
+
+// User-stories block
+.block-stories { margin: 1.5rem 0 1.75rem; }
+.story-card {
+  padding: 1.1rem 1.25rem !important;
+  margin-bottom: 0.7rem;
+  line-height: 1.65;
+
+  &__persona { margin-bottom: 0.5rem; }
+  &__context, &__outcome { margin-bottom: 0.4rem; line-height: 1.65; }
+}
+
+// Steps — cömert spacing
+.block-steps {
+  margin: 2rem 0 2.25rem;
+  &__title {
+    margin-bottom: 1.25rem !important;
+    font-size: 1.1rem;
+    padding-bottom: 0.4rem;
+  }
+}
+.steps { display: flex; flex-direction: column; gap: 0.4rem; }
+.step {
+  display: grid;
+  grid-template-columns: 2.75rem 1fr;
+  gap: 1.25rem !important;
+  padding: 1.1rem 1.15rem !important;
+  margin-bottom: 0 !important;
+  border-radius: var(--radius);
+  align-items: start;
+
+  &__num {
+    background: var(--edu);
+    color: var(--bg);
+    width: 2.25rem;
+    height: 2.25rem;
+    border-radius: 999px;
+    font-weight: 500;
+    font-size: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 0.15rem;
+  }
+  &__content { padding-top: 0.05rem; }
+  &__title {
+    margin-bottom: 0.55rem !important;
+    font-size: 1.02rem;
+    line-height: 1.45;
+    font-weight: 500;
+  }
+  &__body {
+    line-height: 1.75 !important;
+    font-size: 1rem;
+    color: var(--ink-2);
+  }
+
+  &.is-clickable {
+    background: var(--bg-soft);
+    border: 1px solid var(--line-2);
+  }
+  &.is-clickable:hover {
+    background: color-mix(in srgb, var(--enrich-detail) 5%, var(--bg-soft)) !important;
+  }
+}
+
+// Checklist
+.block-checklist {
+  padding: 1.15rem 1.3rem 1.25rem !important;
+  margin: 1.5rem 0 1.75rem;
+
+  &__head { margin-bottom: 0.85rem; gap: 0.5rem; }
+}
+.checklist__item { padding: 0.55rem 0 !important; line-height: 1.6; }
+.checklist__hint { margin-top: 0.3rem; line-height: 1.5; }
+
+// Granularity legend
+.block-gran-legend { padding: 1.25rem 1.5rem 1.5rem !important; margin: 1.5rem 0 1.75rem; }
+.gran-grid {
+  display: grid !important;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)) !important;
+  gap: var(--space-3) !important;
+  // 7 sütundan fazla olmasın — granularity 7 kategori
+  > * { max-width: 100%; }
+  &__item { padding: var(--space-3) var(--space-4) !important; line-height: 1.55; }
+  &__desc { line-height: 1.6; margin-top: var(--space-2); }
+}
+
+// Lesson header
+.lesson-header { padding: 1.5rem 1.75rem 1.75rem !important; margin: 1.5rem 0 1.75rem !important; }
+
+// Code block accordion
+.block-code {
+  margin: 1.5rem 0 1.75rem !important;
+  &__summary { padding: 0.75rem 1.1rem !important; gap: 0.7rem; }
+  pre { padding: 1.25rem 1.5rem !important; line-height: 1.7; }
+}
+
+// Sidebar — kompakt (kullanıcı isteği: %50 azalt)
+.sidebar {
+  padding: 1rem 0.75rem 1.25rem !important;
+  gap: 0.75rem !important;
+}
+.toc__group { margin-bottom: 0.15rem; }
+.sidebar__link, .toc a { padding: 0.22rem 0.3rem !important; line-height: 1.35; }
+.sidebar__brand { padding: 0.25rem 0.3rem; gap: 0.4rem; }
+.search-box__inner { padding: 0.25rem 0.5rem !important; }
+.sidebar__footer { padding: 0.25rem 0.3rem; }
+
+// Hero
+.hero {
+  padding: 0 0 2.5rem !important;
+  margin-bottom: 2.5rem !important;
+  &__title { font-size: 2.5rem; line-height: 1.2; margin-bottom: 1rem; }
+  &__lede { font-size: 1.15rem; line-height: 1.65; margin-bottom: 1.25rem; }
+  &__meta { gap: 1.75rem; padding-top: 0.5rem; }
+}
+
+// Filter bar
+.filter-bar {
+  padding: 1.1rem 1.35rem !important;
+  margin-bottom: 2.5rem !important;
+  gap: 1.25rem;
+
+  &__group { gap: 0.65rem; }
+  &__label { padding-right: 0.25rem; }
+}
+
+// Mini filter (feature-list & table)
+.mini-filter {
+  padding: 0.75rem 0.9rem !important;
+  margin: 0 0 1.1rem !important;
+  gap: 1.25rem !important;
+}
+
+// Tag chips
+.tag {
+  padding: 0.3rem 0.7rem !important;
+}
+
+// Chips genel
+.chip {
+  padding: 0.4rem 0.85rem !important;
+  &--xs { padding: 0.2rem 0.7rem !important; }
+}
+
+// ============================================================================
+// Unified Card System — tüm kart-tipi block'lar aynı görünüm
+// ============================================================================
+
+// Mobile-first: 320px iPhone-5 base
+:root {
+  --card-pad-y: var(--space-3);
+  --card-pad-x: var(--space-3);
+  --main-pad-y: var(--space-4);
+  --main-pad-x: var(--space-3);
+  --appbar-h: 3rem;
+}
+@media (min-width: 420px) { :root { --card-pad-x: var(--space-4); --main-pad-x: var(--space-4); } }
+@media (min-width: 720px) { :root { --card-pad-y: var(--space-4); --card-pad-x: var(--space-5); --main-pad-y: var(--space-6); --main-pad-x: var(--space-6); --appbar-h: 3.5rem; } }
+@media (min-width: 1280px){ :root { --card-pad-y: var(--space-5); --card-pad-x: var(--space-6); --main-pad-y: var(--space-9); --main-pad-x: var(--space-8); } }
+
+// Her kart-tipi blok aynı dokunuş
+.feature-list__item,
+.block-grid__item,
+.layer-card,
+.story-card,
+.dp__term,
+.dp__story,
+.block-kv__pair.is-clickable,
+.checklist__item,
+.step,
+.block-callout {
+  background: var(--card-bg-soft);
+  border: 1px solid var(--card-border);
+  border-radius: var(--card-radius);
+  padding: var(--card-pad-y) var(--card-pad-x) !important;
+  transition: background 140ms ease, border-color 140ms ease, box-shadow 140ms ease, transform 140ms ease;
+}
+
+// Layer cards: arkaplan ve çerçeve yok — flat, sadece üst-renk vurgusu
+// Hepsi TUTARLI: aynı padding, aynı border treatment, hover/active sadece üst-border'ı kalınlaştırır
+.layer-card {
+  background: transparent !important;
+  border: 0 !important;
+  border-top: 3px solid currentColor;
+  border-radius: 0 !important;
+  padding: var(--space-3) var(--space-3) var(--space-3) !important;
+  transition: border-top-width 120ms ease, background 120ms ease;
+}
+.layer-card.is-clickable:hover {
+  background: color-mix(in srgb, currentColor 4%, transparent) !important;
+  border-top-width: 4px !important;
+  box-shadow: none !important;
+  transform: none !important;
+}
+// Active state: sol bar yok, üstte daha kalın renk + soft arkaplan
+.layer-card.is-detail-active {
+  background: color-mix(in srgb, currentColor 6%, transparent) !important;
+  border-top-width: 5px !important;
+  box-shadow: none !important;
+}
+
+// ============================================================================
+// LIST item typography — "Etiket — açıklama" yapısı için belirgin hiyerarşi
+// ============================================================================
+.block-list {
+  li.is-clickable {
+    // Etiket (em-dash öncesi) + açıklama (sonrası)
+    line-height: 1.65;
+    font-size: 1rem;
+
+    // Etiket vurgusu için <strong> kullanıyorsa zaten kalın. Em-dash sonrası ink-2.
+    strong, b { color: var(--ink); font-weight: 500; }
+  }
+  li { color: var(--ink-2); }
+}
+
+// ============================================================================
+// 5N1K — kompakt grid, kategori ikonu sol, kısa label üstte, değer altta
+// ============================================================================
+.dp__5n1k {
+  display: flex !important;
+  flex-direction: column !important;
+  grid-template-columns: none !important;
+  gap: var(--space-3) !important;
+}
+.dp__5n1k-row {
+  display: grid !important;
+  grid-template-columns: 1fr !important;
+  gap: var(--space-1) !important;
+  padding: var(--space-3) var(--space-3) !important;
+  background: var(--bg) !important;
+  border: 1px solid var(--line-2) !important;
+  border-left: 3px solid var(--enrich-detail) !important;
+  border-radius: var(--radius-md) !important;
+}
+.dp__5n1k-key {
+  font-size: 1rem !important;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--enrich-detail);
+  font-weight: 500;
+  i { font-size: 1rem; opacity: 0.85; }
+}
+.dp__5n1k-val {
+  font-size: 1rem !important;
+  line-height: 1.55;
+  color: var(--ink-2);
+}
+
+// ============================================================================
+// Detail panel — daha temiz hiyerarşi
+// ============================================================================
+.dp__section h4 {
+  font-size: 1rem !important;
+  letter-spacing: 0.12em;
+  border-bottom: 1px solid var(--line-2);
+  padding-bottom: var(--space-2);
+  margin-bottom: var(--space-4) !important;
+}
+.dp__section { margin-bottom: var(--space-6) !important; }
+.dp__detail p { font-size: 1rem !important; }
+
+.dp__side {
+  padding: var(--space-3) var(--space-4) !important;
+}
+.dp__side-row {
+  font-size: 1rem !important;
+  padding: var(--space-2) 0;
+  border-bottom: 1px dashed var(--line-2);
+  margin-bottom: 0 !important;
+  display: block !important;
+  &:last-child { border-bottom: 0; }
+}
+.dp__side-label {
+  display: block !important;
+  margin: 0 0 var(--space-1) !important;
+  color: var(--ink);
+  font-size: 1rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-weight: 500;
+}
+
+// Term + story cards in panel — MASTER vertical: label üstte, content altta
+.dp__term, .dp__story {
+  display: block !important;
+  padding: var(--space-3) var(--space-4) !important;
+  font-size: 1rem;
+}
+// Term: term ismi üstte, açıklama altta (zaten dp__term-head + dp__term-meaning block; sıkı uygulayalım)
+.dp__term-head, .dp__term-meaning, .dp__term-why,
+.dp__story-persona, .dp__story-context, .dp__story-outcome {
+  display: block !important;
+}
+.dp__term-head { margin-bottom: var(--space-2) !important; }
+.dp__term-meaning { margin-bottom: var(--space-2) !important; }
+.dp__story-persona { margin-bottom: var(--space-2) !important; }
+.dp__story-context, .dp__story-outcome { margin-bottom: var(--space-2) !important; }
+.dp__story-tag {
+  display: block !important;
+  width: max-content;
+  margin: 0 0 var(--space-1) !important;
+}
+
+// ============================================================================
+// Code accordion — daha temiz summary
+// ============================================================================
+.block-code__summary {
+  font-size: 1rem !important;
+  color: var(--ink-2);
+}
+.block-code__title { color: var(--ink) !important; font-weight: 500; }
+.block-code {
+  background: var(--bg) !important;
+  border-color: var(--line-2) !important;
+}
+
+// ============================================================================
+// Sidebar TOC — biraz ferah
+// ============================================================================
+.toc__group {
+  padding: var(--space-1) 0;
+}
+.toc__group-header {
+  font-size: 1rem !important;
+  letter-spacing: 0.06em;
+  padding: var(--space-2) var(--space-2) !important;
+}
+.toc a {
+  font-size: 1rem !important;
+  padding: var(--space-2) var(--space-3) !important;
+  border-radius: var(--radius-sm);
+  &:hover { background: var(--bg-soft); }
+  &.is-active, &.active { background: color-mix(in srgb, var(--enrich-detail) 8%, transparent); color: var(--ink); font-weight: 500; }
+}
+
+// ============================================================================
+// Heading divider stili — visual rhythm
+// ============================================================================
+.block-heading {
+  position: relative;
+  font-weight: 500;
+  color: var(--ink);
+  &--l4 {
+    font-size: 1.1rem !important;
+    padding-bottom: var(--space-2);
+    border-bottom: 1px solid var(--line-2);
+    margin-bottom: var(--space-4) !important;
+  }
+  &--l3 {
+    font-size: 1.35rem !important;
+    padding-bottom: var(--space-2);
+    border-bottom: 1px solid var(--line);
+    margin-bottom: var(--space-5) !important;
+  }
+}
+
+// Hover ortak — sadece CARD elementlere uygulanır (heading/paragraph hariç)
+.feature-list__item.is-clickable:hover,
+.block-grid__item.is-clickable:hover,
+.layer-card.is-clickable:hover,
+.story-card.is-clickable:hover,
+.block-kv__pair.is-clickable:hover,
+.checklist__item.is-clickable:hover,
+.step.is-clickable:hover,
+.block-callout.is-clickable:hover {
+  border-color: color-mix(in srgb, var(--enrich-detail) 25%, var(--card-border)) !important;
+  box-shadow: var(--shadow-md);
+  transform: translateY(-1px);
+}
+
+// Detail-active sadece kart-tip elementlere
+.feature-list__item.is-detail-active,
+.block-grid__item.is-detail-active,
+.layer-card.is-detail-active,
+.story-card.is-detail-active,
+.block-kv__pair.is-detail-active,
+.checklist__item.is-detail-active,
+.step.is-detail-active,
+.block-callout.is-detail-active {
+  box-shadow: inset 3px 0 0 var(--enrich-detail), var(--shadow-sm) !important;
+}
+
+// is-clickable GENERIC hover (heading/paragraph için override edildi)
+.is-clickable {
+  cursor: pointer;
+  transition: background 140ms ease, border-color 140ms ease, transform 140ms ease, box-shadow 140ms ease;
+}
+.is-clickable:focus-visible { outline: 2px solid var(--enrich-detail); outline-offset: 2px; }
+// Ok ipucu sadece CARD tipi elementlerde
+.feature-list__item.is-clickable, .block-grid__item.is-clickable, .layer-card.is-clickable,
+.story-card.is-clickable, .block-kv__pair.is-clickable, .checklist__item.is-clickable,
+.step.is-clickable, .block-callout.is-clickable {
+  position: relative;
+}
+
+// ============================================================================
+// Cluster / Hero / Filter bar — mobile sıkıştırma (layout DEĞİL, sadece padding)
+// ============================================================================
+.toc a {
+  white-space: normal;
+  word-break: break-word;
+  padding: var(--space-2) var(--space-3) !important;
+  font-size: 1rem;
+  line-height: 1.45;
+}
+
+// MOBILE-FIRST: base = mobile, min-width ile büyütülür
+// Cluster title — mobile base sade, desktop'ta büyür
+.cluster__title {
+  font-size: 1.25rem !important;
+  @media (min-width: 720px) { font-size: 1.55rem !important; }
+  @media (min-width: 1024px) { font-size: 1.85rem !important; }
+}
+
+// Hero — mobile base sıkı, desktop'ta nefes
+.hero {
+  padding: 0 0 var(--space-4) !important;
+  margin-bottom: var(--space-4) !important;
+  @media (min-width: 720px) {
+    padding: var(--space-2) 0 var(--space-5) !important;
+    margin-bottom: var(--space-6) !important;
+  }
+}
+
+// Filter-bar — mobile base sıkı
+.filter-bar {
+  padding: var(--space-2) var(--space-3) !important;
+  margin-bottom: var(--space-4) !important;
+  gap: var(--space-3);
+  @media (min-width: 720px) {
+    padding: var(--space-3) var(--space-4) !important;
+    margin-bottom: var(--space-5) !important;
+    gap: var(--space-4);
+  }
+}
+
+// Detail panel 5N1K — mobile base tek sütun, desktop'ta iki sütun
+.dp__5n1k { grid-template-columns: 1fr !important; }
+.dp__5n1k-row { padding: var(--space-2) var(--space-3) !important; }
+@media (min-width: 720px) {
+  .dp__5n1k { grid-template-columns: auto 1fr !important; }
+  .dp__5n1k-row { padding: var(--space-3) var(--space-4) !important; }
+}
+
+// Backdrop overlay — gri yarı saydam arka katman
+.detail-panel-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(20, 22, 28, 0.45);
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 280ms ease;
+  z-index: 94;
+}
+.detail-panel-backdrop.is-visible {
+  opacity: 1;
+  pointer-events: auto;
+}
+@media (min-width: 1240px) {
+  .detail-panel-backdrop { display: none !important; }
+}
+
+// Dark mode için backdrop ayarı
+:root[data-theme="dark"] .detail-panel-backdrop {
+  background: rgba(0, 0, 0, 0.55);
+}
+
+// ============================================================================
+// LAYOUT FINAL — net, deterministik, mobile-first
+// Önceki tüm parçalı kuralları override eder.
+// ============================================================================
+
+// Base #app
+#app {
+  display: grid !important;
+  gap: 0 !important;
+  min-height: 100vh;
+}
+.main { width: 100%; min-width: 0; padding: var(--space-4) var(--space-3) var(--space-7) !important; }
+
+// Sidebar close button (mobile drawer) — sağ üst, X icon
+.sidebar__close {
+  display: none;
+  position: absolute;
+  top: var(--space-2);
+  right: var(--space-2);
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 999px;
+  background: var(--bg);
+  border: 1px solid var(--line-2);
+  color: var(--ink-2);
+  cursor: pointer;
+  align-items: center;
+  justify-content: center;
+  z-index: 5;
+  i { font-size: 1.1rem; }
+  &:hover { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+}
+@include md-down {
+  .sidebar__close { display: inline-flex; }
+  .sidebar { position: relative; }
+  .sidebar .toc { margin-top: var(--space-7); } // X butonu için boşluk
+}
+
+// Sidebar backdrop (mobile drawer)
+.sidebar-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(20, 22, 28, 0.45);
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 240ms ease;
+  z-index: 75; // sidebar (80) ALTINDA
+}
+.sidebar-backdrop.is-visible { opacity: 1; pointer-events: auto; }
+:root[data-theme="dark"] .sidebar-backdrop { background: rgba(0, 0, 0, 0.55); }
+@media (min-width: 820px) {
+  .sidebar-backdrop { display: none !important; }
+}
+
+// 1) Mobile (< 820px): tek sütun, sidebar+detail drawer
+@include md-down {
+  #app { grid-template-columns: 1fr !important; }
+  .sidebar {
+    position: fixed !important;
+    top: 0; left: 0;
+    width: min(88vw, 400px) !important;
+    height: 100vh !important;
+    z-index: 80;
+    transform: translateX(-100%);
+    transition: transform 280ms cubic-bezier(0.2, 0.8, 0.2, 1);
+    background: var(--bg) !important;
+    border-right: 1px solid var(--line-2);
+    overflow-y: auto;
+    padding: var(--space-3) var(--space-3) var(--space-6) !important;
+
+    &.sidebar--open { transform: translateX(0); }
+  }
+}
+
+// 2) Tablet (820px – 1239px): sidebar sticky 2-sütun grid, detail panel DRAWER
+// Sidebar fluid (--sidebar-w token, clamp ile responsive)
+@media (min-width: 820px) and (max-width: 1239px) {
+  #app { grid-template-columns: var(--sidebar-w) minmax(0, 1fr) !important; }
+  .sidebar {
+    position: sticky !important;
+    top: var(--appbar-h) !important;
+    transform: none !important;
+    width: auto !important;
+    height: calc(100vh - var(--appbar-h)) !important;
+    overflow-y: auto;
+    align-self: start;
+    z-index: 10;
+    border-right: 1px solid var(--line-2);
+    background: var(--bg-soft) !important;
+    padding: var(--space-4) var(--space-3) var(--space-6) !important;
+  }
+  .main { padding: var(--space-5) var(--space-5) var(--space-8) !important; }
+}
+
+// Detail panel — DRAWER moda (mobile + tablet, <1240px)
+@include lg-down {
+  .detail-panel {
+    position: fixed !important;
+    top: 0; right: 0;
+    width: min(90vw, 720px) !important;
+    height: 100vh !important;
+    z-index: 95;
+    transform: translateX(100%);
+    transition: transform 320ms cubic-bezier(0.2, 0.8, 0.2, 1);
+    overflow-y: auto;
+    background: color-mix(in srgb, var(--bg) 78%, transparent) !important;
+    backdrop-filter: saturate(160%) blur(18px);
+    -webkit-backdrop-filter: saturate(160%) blur(18px);
+    box-shadow: -20px 0 60px rgba(0,0,0,0.18);
+    border-left: 1px solid color-mix(in srgb, var(--line) 50%, transparent) !important;
+    padding: var(--space-4) var(--space-4) var(--space-6) !important;
+
+    &.detail-panel--open { transform: translateX(0) !important; }
+  }
+}
+
+// 3) Desktop (1240px+): 3 sütun grid — HER İKİ panel STICKY
+// Sol sidebar fluid (--sidebar-w token), sağ detail panel 720px
+@media (min-width: 1240px) {
+  #app { grid-template-columns: var(--sidebar-w) minmax(0, 1fr) 720px !important; }
+  .sidebar {
+    position: sticky !important;
+    top: var(--appbar-h) !important;
+    left: auto !important;
+    right: auto !important;
+    inset: var(--appbar-h) auto auto auto !important;
+    transform: none !important;
+    width: auto !important;
+    max-width: none !important;
+    height: calc(100vh - var(--appbar-h)) !important;
+    overflow-y: auto;
+    // Sidebar scroll content scroll'undan bağımsız — chain'lemesin:
+    overscroll-behavior: contain;
+    align-self: start;
+    z-index: 10;
+    border-right: 1px solid var(--line-2);
+    background: var(--bg-soft) !important;
+    padding: var(--space-4) var(--space-3) var(--space-6) !important;
+    box-shadow: none !important;
+  }
+  .detail-panel {
+    position: sticky !important;
+    top: var(--appbar-h) !important;
+    left: auto !important;
+    right: auto !important;
+    inset: var(--appbar-h) auto auto auto !important;
+    transform: none !important;
+    width: auto !important;
+    max-width: none !important;
+    height: calc(100vh - var(--appbar-h)) !important;
+    overflow-y: auto;
+    align-self: start;
+    z-index: 10;
+    box-shadow: none !important;
+    border-left: 1px solid var(--line-2) !important;
+    background: var(--bg-soft) !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    padding: var(--space-4) var(--space-4) var(--space-6) !important;
+    transition: none !important;
+  }
+  .main { padding: var(--space-6) var(--space-6) var(--space-9) !important; }
+  .mobile-menu-toggle, .appbar__menu { display: none !important; }
+}
+
+// Hamburger sadece tablet altı (820px altı)
+@media (min-width: 820px) {
+  .appbar__menu, .mobile-menu-toggle { display: none !important; }
+}
+
+// Backdrop sadece drawer modunda
+@media (min-width: 1240px) {
+  .detail-panel-backdrop { display: none !important; }
+}
+
+// Mobile menu toggle button
+.mobile-menu-toggle {
+  display: none;
+  position: fixed;
+  top: var(--space-3);
+  left: var(--space-3);
+  z-index: 100;
+  width: 2.5rem; height: 2.5rem;
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: var(--shadow-md);
+
+  @include nav-down { display: inline-flex; }
+}
+
+// Hero responsive
+.hero__title {
+  font-size: clamp(1.5rem, 4.5vw, var(--fs-3xl));
+}
+.hero__lede {
+  font-size: clamp(0.95rem, 2.5vw, 1.15rem);
+}
+
+// Cluster header responsive
+.cluster__title {
+  font-size: clamp(1.4rem, 3.5vw, 1.85rem) !important;
+}
+
+// Grid blocks: mobile = 1 sütun
+.block-grid {
+  &--cols-2, &--cols-3 {
+    grid-template-columns: 1fr !important;
+    @media (min-width: 720px)  { &--cols-2 { grid-template-columns: 1fr 1fr !important; } }
+    @media (min-width: 1024px) { &--cols-3 { grid-template-columns: 1fr 1fr 1fr !important; } }
+  }
+}
+
+// Layer cards: mobile = 1 sütun, tablet = 2, desktop var(--cols)
+.block-layer-cards {
+  grid-template-columns: 1fr !important;
+  @media (min-width: 720px)  { grid-template-columns: 1fr 1fr !important; }
+  @media (min-width: 1024px) { grid-template-columns: repeat(var(--cols, 5), 1fr) !important; }
+}
+
+// ============================================================================
+// TABLE + CODE — mobile davranışı (P2)
+// ============================================================================
+// MOBILE-FIRST: scroll hint mobile base, desktop'ta gerekmez
+.block-table__wrap {
+  overflow-x: auto;
+  overflow-y: visible;
+  -webkit-overflow-scrolling: touch;
+  position: relative;
+  background-image: linear-gradient(to left, var(--bg-soft) 0%, transparent 24px);
+  background-repeat: no-repeat;
+  background-position: right center;
+  background-size: 24px 100%;
+  @media (min-width: 720px) {
+    background-image: none;            // desktop'ta scroll fade gereksiz
+  }
+}
+.block-table {
+  min-width: 28rem;
+  font-size: 1rem;
+  @media (min-width: 420px) { min-width: 36rem; }
+  thead th {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    background: var(--bg-soft);
+  }
+}
+
+// MOBILE-FIRST: code copy büyük tap target mobile base
+.block-code__copy {
+  width: 2.5rem !important;
+  height: 2.5rem !important;
+  min-width: 44px;
+  min-height: 44px;
+  @media (min-width: 720px) {
+    width: auto !important;
+    height: auto !important;
+    min-width: auto;
+    min-height: auto;
+  }
+}
+.block-code__summary {
+  padding: var(--space-2) var(--space-3) !important;
+  font-size: 1rem;
+  .block-code__lang, .block-code__lines { padding: 0.1rem 0.4rem !important; font-size: 1rem; }
+  @media (min-width: 420px) {
+    padding: var(--space-3) var(--space-4) !important;
+  }
+}
+.block-code pre {
+  font-size: 1rem !important;
+  line-height: 1.5 !important;
+  padding: var(--space-3) var(--space-3) !important;
+  @media (min-width: 720px) {
+    padding: var(--space-4) var(--space-5) !important;
+  }
+}
+.block-code .line-no, .block-code [class*="line-num"] {
+  @include sm-only { display: none; }
+}
+
+// Tabloyu kart-list formuna dönüştürmek MOBILE'da çok agresif olurdu;
+// onun yerine scroll hint + sticky header yaklaşımı.
+
+// ============================================================================
+// FILTER-BAR — collapse toggle (P4)
+// ============================================================================
+.filter-bar {
+  position: relative;
+  flex-direction: column !important;
+  align-items: stretch !important;
+
+  &__toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    padding: var(--space-2) var(--space-3);
+    background: var(--bg);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-md);
+    color: var(--ink);
+    cursor: pointer;
+    font: inherit;
+    font-size: 1rem;
+    font-weight: 500;
+    align-self: flex-start;
+    transition: all 140ms;
+    i { font-size: 1rem; color: var(--ink-3); }
+    .filter-bar__chevron { margin-left: auto; transition: transform 200ms; }
+    &:hover { background: var(--bg-soft); border-color: var(--ink-4); }
+
+    @media (min-width: 820px) {
+      display: none; // Desktop'ta otomatik açık, toggle gizli
+    }
+  }
+  &__count {
+    background: var(--enrich-detail);
+    color: var(--bg);
+    border-radius: 999px;
+    padding: 0.05rem 0.45rem;
+    font-size: 1rem;
+    font-weight: 600;
+    min-width: 1.25rem;
+    text-align: center;
+  }
+  &--open &__toggle .filter-bar__chevron { transform: rotate(180deg); }
+
+  &__body {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-3) var(--space-4);
+    margin-top: var(--space-2);
+    @media (min-width: 820px) { margin-top: 0; }
+  }
+
+  &__clear {
+    background: none;
+    border: 1px dashed var(--line);
+    border-radius: var(--radius-md);
+    color: var(--ink-3);
+    cursor: pointer;
+    font: inherit;
+    font-size: 1rem;
+    padding: var(--space-1) var(--space-3);
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-1);
+    align-self: flex-start;
+    transition: color 140ms;
+    i { font-size: 1rem; }
+    &:hover { color: var(--state-critical); border-color: var(--state-critical); }
+  }
+}
+
+// Dark mode filter-bar toggle + clear
+:root[data-theme="dark"] {
+  .filter-bar__toggle {
+    background: var(--bg-soft);
+    border-color: var(--line);
+    color: var(--ink);
+    &:hover { background: #252930; }
+  }
+  .filter-bar__clear {
+    color: var(--ink-3);
+    border-color: var(--line);
+    &:hover { color: #ff7a7a; border-color: #ff7a7a; }
+  }
+}
+
+// ============================================================================
+// Cluster skeleton shimmer (R3-D)
+// ============================================================================
+.cluster__skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-3) 0;
+}
+.cluster__skeleton-line {
+  height: 1rem;
+  background: linear-gradient(90deg,
+    var(--bg-soft) 0%,
+    color-mix(in srgb, var(--ink-5) 35%, var(--bg-soft)) 50%,
+    var(--bg-soft) 100%);
+  background-size: 200% 100%;
+  border-radius: var(--radius-sm);
+  animation: cluster-shimmer 1.4s linear infinite;
+  &--80 { width: 80%; }
+  &--60 { width: 60%; }
+}
+@keyframes cluster-shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+// ============================================================================
+// HERO + FOOTER cila (R3-C)
+// ============================================================================
+.hero__meta {
+  // Mobile: tek satıra sığacak şekilde küçült
+  @include mobile-only {
+    font-size: 1rem !important;
+    gap: var(--space-2) var(--space-3) !important;
+    flex-wrap: wrap;
+    span { white-space: nowrap; }
+  }
+}
+
+// Footer kbd kısayol bilgisi — daha belirgin
+.appfooter {
+  background: var(--bg-soft);
+  border-top: 2px solid var(--line);
+  &__col strong {
+    color: var(--enrich-detail);
+    margin-bottom: var(--space-2);
+  }
+  kbd {
+    background: var(--bg);
+    border: 1px solid var(--ink-4);
+    box-shadow: 0 2px 0 0 var(--ink-5);
+    color: var(--ink);
+    font-weight: 500;
+    padding: 0.15rem 0.5rem;
+    border-radius: var(--radius-sm);
+    font-family: 'Roboto Mono', monospace;
+    font-size: 1rem;
+    margin: 0 0.15rem;
+  }
+}
+:root[data-theme="dark"] .appfooter {
+  background: var(--bg-soft);
+  border-top-color: var(--line);
+  kbd {
+    background: var(--bg);
+    border-color: var(--line);
+    box-shadow: 0 2px 0 0 var(--ink-5);
+    color: var(--ink);
+  }
+}
+
+// ============================================================================
+// TOC quick filter (R3-B)
+// ============================================================================
+.toc__quickfilter {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  background: var(--bg-soft);
+  border: 1px solid var(--line-2);
+  border-radius: var(--radius-md);
+  margin: 0 var(--space-2) var(--space-3);
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  i { color: var(--ink-3); font-size: 1rem; }
+  input {
+    flex: 1;
+    min-width: 0;
+    background: transparent;
+    border: 0;
+    outline: none;
+    color: var(--ink);
+    font: inherit;
+    font-size: 1rem;
+    &::placeholder { color: var(--ink-4); }
+  }
+  &:focus-within {
+    border-color: var(--enrich-detail);
+    background: var(--bg);
+  }
+}
+:root[data-theme="dark"] .toc__quickfilter {
+  background: var(--bg-soft);
+  border-color: var(--line);
+}
+
+// ============================================================================
+// TOAST (R2-G)
+// ============================================================================
+.toast-container {
+  position: fixed;
+  bottom: var(--space-5);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 200;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  pointer-events: none;
+  @include mobile-only {
+    bottom: var(--space-4);
+    left: var(--space-3);
+    right: var(--space-3);
+    transform: none;
+  }
+}
+.toast {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-4);
+  background: var(--ink);
+  color: var(--bg);
+  border-radius: var(--radius-pill);
+  font-size: 1rem;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.25);
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity 240ms ease, transform 240ms cubic-bezier(0.2, 0.8, 0.2, 1);
+  pointer-events: auto;
+  i { font-size: 1.1rem; }
+  &.is-visible { opacity: 1; transform: translateY(0); }
+  &--success { background: #16a34a; color: #fff; }
+  &--error { background: #dc2626; color: #fff; }
+  &--info { background: var(--ink); color: var(--bg); }
+}
+:root[data-theme="dark"] .toast {
+  &--info { background: var(--ink); color: var(--bg); }
+  &--success { background: #4ade80; color: #0a0a0a; }
+  &--error { background: #ff7a7a; color: #0a0a0a; }
+}
+
+// ============================================================================
+// 420px ekstra mobile sıkıştırma + detail panel iç flat (R2-G)
+// ============================================================================
+@include sm-only {
+  // iPhone 5 — minimum padding
+  .cluster {
+    padding: var(--space-3) var(--space-3) var(--space-3) !important;
+    border-left-width: 3px !important;
+  }
+  .cluster__title {
+    font-size: 1.05rem !important;
+    padding-right: 3.25rem !important;
+  }
+  .cluster__toggle {
+    min-width: 2.25rem !important;
+    height: 2rem !important;
+    padding: 0 var(--space-2) !important;
+    font-size: 1rem !important;
+    &::after { content: ""; }
+  }
+  // Detail panel mobile drawer
+  .detail-panel { padding: var(--space-3) var(--space-3) var(--space-5) !important; }
+  // Hero kompakt
+  .hero {
+    padding: 0 0 var(--space-3) !important;
+    margin-bottom: var(--space-3) !important;
+    &__title { font-size: 1.25rem !important; }
+    &__lede { font-size: 1rem !important; }
+  }
+}
+
+// Detail panel iç bloklarına flat pattern — mobile'da iç içe padding'i sıfırla
+@include mobile-only {
+  .dp__term, .dp__story, .dp__5n1k-row, .dp__side, .dp__ref {
+    padding: var(--space-3) var(--space-3) !important;
+    border-radius: var(--radius-md) !important;
+    margin: 0 0 var(--space-2) !important;
+  }
+  .dp__terms, .dp__stories, .dp__5n1k, .dp__refs {
+    padding: 0 !important;
+    gap: var(--space-2) !important;
+  }
+  .dp__section {
+    padding: 0 !important;
+    margin-bottom: var(--space-4) !important;
+  }
+}
+
+// ============================================================================
+// iOS Safari dvh fix + Layer-cards hover/active + Footer (R2-E)
+// ============================================================================
+// 100vh → 100dvh (dynamic viewport height) — iOS URL bar gizlenince viewport büyür
+@supports (height: 100dvh) {
+  .sidebar, .detail-panel {
+    @media (min-width: 1240px) {
+      height: calc(100dvh - var(--appbar-h)) !important;
+    }
+    @include lg-down {
+      height: 100dvh !important;
+    }
+  }
+  .pop.pop--detail {
+    @include mobile-only {
+      max-height: 80dvh !important;
+    }
+  }
+}
+
+// Layer cards / grid items — hover vs active clear ayrım
+.layer-card, .block-grid__item {
+  position: relative;
+  transition: all 160ms ease;
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+    z-index: 1;
+  }
+  &.is-detail-active {
+    border-color: var(--enrich-detail) !important;
+    border-width: 2px !important;
+    background: color-mix(in srgb, var(--enrich-detail) 8%, var(--card-bg-soft)) !important;
+    &::after {
+      content: '';
+      position: absolute;
+      top: 0; right: 0;
+      width: 1.5rem;
+      height: 1.5rem;
+      background: var(--enrich-detail);
+      clip-path: polygon(100% 0, 0 0, 100% 100%);
+      border-top-right-radius: var(--card-radius);
+    }
+  }
+}
+:root[data-theme="dark"] {
+  .layer-card:hover, .block-grid__item:hover {
+    box-shadow: 0 4px 18px rgba(0,0,0,0.4);
+  }
+  .layer-card.is-detail-active, .block-grid__item.is-detail-active {
+    background: color-mix(in srgb, var(--enrich-detail) 18%, var(--card-bg-soft)) !important;
+  }
+}
+
+// Footer — mobile 1 sütun, kbd hatırlatma sticky değil ama belirgin
+.appfooter {
+  @include mobile-only {
+    grid-template-columns: 1fr !important;
+    text-align: center;
+    padding: var(--space-5) var(--space-3) !important;
+    gap: var(--space-3) !important;
+  }
+  kbd {
+    background: var(--bg-soft);
+    border: 1px solid var(--line);
+    padding: 0.1rem 0.4rem;
+    border-radius: var(--radius-sm);
+    font-family: 'Roboto Mono', monospace;
+    font-size: 1rem;
+  }
+}
+:root[data-theme="dark"] .appfooter kbd {
+  background: var(--bg);
+  border-color: var(--line-2);
+  color: var(--ink-2);
+}
+
+// ============================================================================
+// DETAIL PANEL — tablet width + close button sticky (R2-C)
+// ============================================================================
+// Close butonu uzun içerikte kaybolmasın — sticky top
+.detail-panel .dp__close {
+  position: sticky !important;
+  top: 0;
+  margin-left: auto;
+  z-index: 5;
+  // Daha belirgin
+  width: 2.5rem !important;
+  height: 2.5rem !important;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+// Tablet: 820–1239px arası 90vw çok geniş — sınırlı tut
+@media (min-width: 820px) and (max-width: 1239px) {
+  .detail-panel {
+    width: min(540px, 70vw) !important;
+    max-width: 540px;
+  }
+}
+// Tablet + mobile drawer açıkken sidebar tıklanmasın (pointer-events kapat)
+body:has(.detail-panel--open) .sidebar {
+  @include lg-down {
+    pointer-events: none;
+    opacity: 0.4;
+    transition: opacity 200ms;
+  }
+}
+
+// ============================================================================
+// POPOVER mobile fix — backdrop + scroll + viewport-fit (R2-B)
+// ============================================================================
+.pop {
+  position: fixed;
+  z-index: 110;
+  max-width: min(420px, calc(100vw - 1rem));
+  max-height: min(70vh, 32rem);
+  overflow-y: auto;
+  overflow-x: hidden;
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  box-shadow: 0 12px 40px rgba(0,0,0,0.18);
+  // Touch device'da pop'a tıklamaya odaklı; iframe scroll'ı çakışmasın
+  -webkit-overflow-scrolling: touch;
+
+  @include mobile-only {
+    // Mobile'da bottom-sheet mantığı için detail popover
+    &.pop--detail {
+      position: fixed !important;
+      left: 0 !important;
+      right: 0 !important;
+      bottom: 0 !important;
+      top: auto !important;
+      max-width: 100vw !important;
+      max-height: 80vh !important;
+      border-radius: var(--radius-lg) var(--radius-lg) 0 0 !important;
+      box-shadow: 0 -8px 40px rgba(0,0,0,0.3);
+      .pop__arrow { display: none; }
+    }
+  }
+}
+.pop-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(3px);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 240ms ease;
+  z-index: 105;
+  &.is-visible {
+    opacity: 1;
+    pointer-events: auto;
+  }
+  @media (min-width: 720px) {
+    display: none !important;
+  }
+}
+body.pop-open {
+  @include mobile-only {
+    overflow: hidden;
+  }
+}
+
+// ============================================================================
+// SEARCH BOX — mobile + dark + a11y (R2-A)
+// ============================================================================
+.search-box {
+  position: relative;
+  &__results {
+    position: absolute;
+    top: calc(100% + 0.25rem);
+    left: 0;
+    right: 0;
+    max-height: min(70vh, 32rem);
+    overflow-y: auto;
+    background: var(--bg);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-md);
+    box-shadow: 0 12px 40px rgba(0,0,0,0.15);
+    z-index: 90;
+    @include mobile-only {
+      // Mobile: appbar grid'inde alt satırdaysa search-box, results full-width
+      position: fixed;
+      top: auto;
+      left: var(--space-2);
+      right: var(--space-2);
+      max-height: 60vh;
+    }
+  }
+  &__count {
+    padding: var(--space-1) var(--space-3);
+    font-size: 1rem;
+    color: var(--ink-3);
+    border-bottom: 1px solid var(--line-2);
+    background: var(--bg-soft);
+  }
+  &__empty {
+    padding: var(--space-5) var(--space-4);
+    text-align: center;
+    color: var(--ink-3);
+    i {
+      font-size: 2rem;
+      color: var(--ink-4);
+      display: block;
+      margin-bottom: var(--space-2);
+    }
+    p {
+      margin: 0 0 var(--space-1);
+      strong { color: var(--ink); }
+    }
+    &-hint {
+      font-size: 1rem;
+      color: var(--ink-4);
+      margin-top: var(--space-2) !important;
+    }
+  }
+}
+.search-result {
+  display: block;
+  padding: var(--space-2) var(--space-3);
+  border-bottom: 1px solid var(--line-2);
+  color: var(--ink-2);
+  text-decoration: none;
+  transition: background 120ms;
+  &:hover, &.is-active {
+    background: var(--bg-soft);
+    color: var(--ink);
+  }
+  &:last-child { border-bottom: 0; }
+  &__title {
+    font-weight: 500;
+    color: var(--ink);
+    font-size: 1rem;
+    mark {
+      background: color-mix(in srgb, var(--enrich-detail) 30%, transparent);
+      color: var(--enrich-detail);
+      padding: 0 0.15rem;
+      border-radius: 2px;
+    }
+  }
+  &__snippet {
+    font-size: 1rem;
+    color: var(--ink-3);
+    margin-top: 0.15rem;
+    line-height: 1.4;
+    mark {
+      background: color-mix(in srgb, var(--enrich-info) 30%, transparent);
+      color: var(--enrich-info);
+      padding: 0 0.15rem;
+      border-radius: 2px;
+    }
+  }
+  &__meta {
+    font-size: 1rem;
+    color: var(--ink-4);
+    margin-top: 0.2rem;
+    font-family: 'Roboto Mono', monospace;
+  }
+}
+
+// ============================================================================
+// PRINT STYLESHEET (P8)
+// ============================================================================
+@media print {
+  // Genel reset
+  html, body { background: #fff !important; color: #000 !important; }
+  // Layout: tek sütun, sidebar/header/footer gizle
+  .appbar, .sidebar, .detail-panel, .filter-bar,
+  .mobile-menu-toggle, .sidebar-backdrop, .detail-panel-backdrop,
+  .enrich-btn, .cluster__toggle, .appfooter {
+    display: none !important;
+  }
+  #app {
+    display: block !important;
+    max-width: 100% !important;
+    grid-template-columns: 1fr !important;
+  }
+  .main { padding: 0 !important; }
+  // Cluster: tümü açık, sayfa kırılımları nazik
+  .cluster {
+    page-break-inside: avoid;
+    break-inside: avoid;
+    background: #fff !important;
+    border: 1px solid #ccc !important;
+    box-shadow: none !important;
+    border-left: 3px solid #666 !important;
+    margin-bottom: 1.5rem !important;
+    padding: 1rem !important;
+    &.cluster--collapsed .cluster__body {
+      max-height: none !important;
+      opacity: 1 !important;
+      margin-top: 1rem !important;
+      display: block !important;
+      pointer-events: auto !important;
+    }
+  }
+  // Code blokları açık + monospace + black/white
+  details > .block-code__body { display: block !important; }
+  .block-code { background: #f5f5f5 !important; }
+  pre, code { color: #000 !important; background: #f5f5f5 !important; }
+  // Linkler: URL'i parantezde göster
+  a[href^="http"]:not([href*="/ddd_moduler_monolith"])::after {
+    content: " (" attr(href) ")";
+    font-size: 1rem;
+    color: #666;
+  }
+  // Hero başlığı sayfa başında
+  .hero {
+    page-break-after: avoid;
+    break-after: avoid;
+  }
+  // Detail panel placeholder gizle
+  .detail-panel__placeholder { display: none; }
+  // Popover ve hover ipuçları gizle
+  .pop { display: none !important; }
+}
+
+// ============================================================================
+// LOADING / EMPTY STATE iyileştirmeleri (P8)
+// ============================================================================
+.loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3);
+  padding: var(--space-9) var(--space-4);
+  color: var(--ink-3);
+  font-size: var(--fs-md);
+  i { font-size: 1.5rem; color: var(--enrich-detail); }
+}
+
+// Cluster body içi loading skeleton (lazy expand için)
+.cluster--loading .cluster__body {
+  &::before {
+    content: '';
+    display: block;
+    height: 0.85rem;
+    background: linear-gradient(90deg,
+      var(--bg-soft) 0%,
+      color-mix(in srgb, var(--ink-5) 30%, var(--bg-soft)) 50%,
+      var(--bg-soft) 100%);
+    background-size: 200% 100%;
+    animation: shimmer 1.4s linear infinite;
+    border-radius: var(--radius-sm);
+    margin-bottom: var(--space-2);
+    width: 60%;
+  }
+}
+@keyframes shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+// Detail panel empty state — daha sıcak metin
+.dp__empty {
+  text-align: center;
+  padding: var(--space-6) var(--space-4) !important;
+  p:first-of-type {
+    font-size: var(--fs-md);
+    color: var(--ink-2);
+    margin-bottom: var(--space-2);
+  }
+  i {
+    font-size: 2.5rem;
+    color: var(--enrich-detail);
+    opacity: 0.6;
+    display: block;
+    margin-bottom: var(--space-3);
+  }
+}
+
+// ============================================================================
+// Block error fallback (P6 — render hatası graceful)
+// ============================================================================
+.block-error {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  background: var(--state-missing-bg);
+  border: 1px solid color-mix(in srgb, var(--state-critical) 30%, transparent);
+  border-left: 4px solid var(--state-critical);
+  border-radius: var(--radius-md);
+  color: var(--state-critical);
+  font-size: 1rem;
+  margin: var(--space-3) 0;
+  i { font-size: 1.25rem; flex-shrink: 0; }
+  code {
+    background: rgba(0, 0, 0, 0.1);
+    padding: 0.1rem 0.4rem;
+    border-radius: var(--radius-sm);
+  }
+}
+:root[data-theme="dark"] .block-error {
+  background: color-mix(in srgb, #ff7a7a 14%, var(--bg-soft));
+  border-color: color-mix(in srgb, #ff7a7a 30%, transparent);
+  border-left-color: #ff7a7a;
+  color: #ff7a7a;
+}
+
+// ============================================================================
+// TOC active state — scrollspy ile entegrasyon (P4)
+// ============================================================================
+.toc a {
+  position: relative;
+  transition: background 140ms, color 140ms;
+  &.is-active, &.toc__link--active {
+    background: color-mix(in srgb, var(--enrich-detail) 14%, transparent);
+    color: var(--enrich-detail) !important;
+    font-weight: 500;
+    &::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 0.3rem;
+      bottom: 0.3rem;
+      width: 3px;
+      background: var(--enrich-detail);
+      border-radius: 0 2px 2px 0;
+    }
+  }
+}
+
+// Detail panel close on mobile
+@include nav-down {
+  .sidebar__gran-legend { display: none; }
+}
+
+// Touch-friendly hit areas
+@media (pointer: coarse) {
+  .enrich-btn { width: 2rem; height: 2rem; }
+  .chip { padding: 0.5rem 1rem !important; }
+}
+
+// ============================================================================
+// APPBAR — mobile-first (320px+)
+// ============================================================================
+// MOBILE: yatay scroll yok — overflow-x: clip kullan, hidden DEĞİL
+// (hidden body'yi scroll container yapar ve sticky'yi kırar.)
+html, body {
+  max-width: 100vw;
+  overflow-x: clip; // hidden YASAK: sticky'yi kırar
+}
+body { min-width: 0; }
+* { min-width: 0; box-sizing: border-box; }
+
+// ============================================================================
+// MASTER KEY-VALUE PATTERN — başlık üstte, içerik altta. HER YERDE.
+// ============================================================================
+// Bu kural altındaki tüm "label + description" çiftleri (5N1K, terms, kv-row,
+// FE/BE side, story, popover term) tek bir tutarlı pattern kullanır:
+//   - Etiket (label/dt/key) BLOCK + tam genişlik + alt margin
+//   - Değer (value/dd/val) BLOCK + tam genişlik + cömert line-height
+// Hiçbir yerde dt|dd grid yan yana DEĞİL. Açıklama her zaman tam genişlik.
+.block-kv__pair, .block-terms__pair, .dp__5n1k-row, .dp__side, .dp__term, .dp__story {
+  display: block !important;
+  grid-template-columns: none !important;
+}
+.block-kv__pair dt, .block-terms__pair dt, .dp__5n1k-key, .dp__side-label,
+.dp__term-head, .dp__story-persona, .dp__story-tag {
+  display: block !important;
+  width: auto !important;
+}
+.block-kv__pair dd, .block-terms__pair dd, .dp__5n1k-val,
+.dp__term-meaning, .dp__story-context, .dp__story-outcome {
+  display: block !important;
+  width: 100% !important;
+  margin-left: 0 !important;
+}
+
+// Hiçbir top-level container viewport'tan geniş olamaz
+#app, .appbar, .main, .sidebar, .detail-panel, .hero, .filter-bar, .cluster {
+  max-width: 100vw;
+  box-sizing: border-box;
+}
+
+// ============================================================================
+// MOBILE FLATTENING — iç içe wrapper'ların görsel tedavisini kaldır (<720px)
+// Kural: DIŞ wrapper'lar (block-terms, block-callout, lesson-header,
+// kv listesi, grid kapsayıcısı) mobilde flat görünür — bg/border/padding 0.
+// SADECE en içteki kart (pair, item, card) kendi görsel kimliğini korur.
+// ============================================================================
+@include mobile-only {
+  // Cluster içi nefes payı — sadece tek katman padding
+  .cluster {
+    padding: var(--space-3) var(--space-2) var(--space-4) !important;
+    margin-bottom: var(--space-4) !important;
+    border-radius: var(--radius-md);
+  }
+  .cluster__body { margin-top: var(--space-3) !important; }
+
+  // OUTER wrapper'lar — bg/border/padding'i kaldır
+  .block-terms,
+  .block-callout,
+  .block-kv,
+  .block-layer-cards,
+  .block-grid,
+  .block-steps,
+  .block-checklist,
+  .block-user-stories,
+  .block-feature-list,
+  .block-examples,
+  .lesson-header {
+    background: transparent !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    padding: 0 !important;
+    margin: var(--space-3) 0 !important;
+    box-shadow: none !important;
+  }
+
+  // Outer wrapper'ın "iç başlığı" (Terim sözlüğü, Bu ünitenin sonunda…) için minik üst boşluk
+  .block-terms__title,
+  .block-steps__title,
+  .block-checklist__title,
+  .block-user-stories__title,
+  .block-callout__title,
+  .lesson-header__top {
+    padding: 0 var(--space-1) !important;
+    margin: 0 0 var(--space-2) !important;
+  }
+
+  // Inner kartlar — kendi visual'ını koru, tam genişlik
+  .block-terms__pair,
+  .block-callout__body,
+  .block-kv__pair,
+  .layer-card,
+  .block-grid__item,
+  .step,
+  .checklist__item,
+  .story-card,
+  .feature-list__item,
+  .block-examples li {
+    padding: var(--space-3) var(--space-3) !important;
+    border-radius: var(--radius-md) !important;
+    margin: 0 0 var(--space-2) !important;
+  }
+
+  // Detail panel iç wrapper'ları (lesson-header gibi geliyor) — header alanları
+  .lesson-header__prereq,
+  .lesson-header__goals {
+    padding: 0 var(--space-1) !important;
+    margin-top: var(--space-2) !important;
+    border: 0 !important;
+  }
+
+  // Cluster body içindeki paragraf/heading'lere sol-sağ ekstra padding verme
+  .cluster__body > p,
+  .cluster__body > h3,
+  .cluster__body > h4,
+  .cluster__body > h5 {
+    padding: 0 var(--space-1) !important;
+  }
+}
+// ============================================================================
+// CLUSTER ACCORDION — v2 REDESIGN (kart-içinde-kart + net hiyerarşi)
+//
+// Tasarım kararları:
+//  1. Sayfa zemini (recessed)  → cluster kartı (elevated, beyaz)
+//                              → açık body (recessed-içte, soft)
+//     Üç seviye → görsel hiyerarşi anında okunur.
+//  2. Layer rengi: kalın üst şerit (top stripe 5px) + ince sol şerit
+//     → renk hâkim ama metni boğmuyor.
+//  3. Toggle: 44×44 büyük buton, daire şeklinde, contrast bg,
+//     chevron 180° döner. Açık/kapalı net ayrılır.
+//  4. Header: kapalı durumda tek bir geniş tıklama alanı + hover'da
+//     +2px yükselme + accent border + "Aç →" mikro yazısı.
+//  5. Açık durumda: header üstünde küçük "AÇIK" rozeti + body üst
+//     kenarında ayraç + body soft zemin.
+// ============================================================================
+
+// ============================================================================
+// NEUMORPHISM (Soft UI) — sayfa + kart + body
+// Sayfa = aynı bg-page; kart üstüne çift yumuşak gölge ile yükselir.
+// Açıldığında body INSET (içe gömük) hissi verir.
+// ============================================================================
+.content { background: var(--neu-bg) !important; }
+
+.cluster {
+  position: relative;
+  border: 0 !important;                              // ← sert border yok
+  border-radius: var(--neu-radius);
+  background: var(--neu-surface);
+  margin-bottom: calc(var(--space-5) + 4px) !important; // gölgelerin nefes alması için
+  padding: 0 !important;
+  overflow: hidden;
+  // ÇİFT YUMUŞAK GÖLGE — neumorphic kabartma
+  box-shadow:
+    calc(-1 * var(--neu-distance)) calc(-1 * var(--neu-distance)) var(--neu-blur) var(--neu-shadow-light),
+    var(--neu-distance) var(--neu-distance) var(--neu-blur) var(--neu-shadow-dark);
+  transition:
+    box-shadow 260ms cubic-bezier(0.2, 0.8, 0.2, 1),
+    transform 200ms ease;
+
+  // Layer indicator — sol-üst köşede yumuşak parlayan nokta (kalın border yerine)
+  &::before {
+    content: "";
+    position: absolute;
+    top: 16px; left: 16px;
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--enrich-detail);
+    box-shadow: 0 0 14px color-mix(in srgb, var(--enrich-detail) 70%, transparent);
+    z-index: 2;
+    opacity: 0.85;
+  }
+
+  // -------- Header --------
+  &__header {
+    position: relative;
+    cursor: pointer;
+    user-select: none;
+    padding: var(--space-4) var(--space-5);
+    padding-right: 4.5rem;
+    padding-left: calc(var(--space-5) + 18px); // layer dot için yer
+    transition: opacity 180ms ease;
+    background: transparent !important; // hover'da bg değişmez (neumorphic kuralı)
+  }
+
+  &__header:hover { opacity: 0.92; }
+
+  // -------- Toggle — neumorphic dairesel buton --------
+  &__toggle {
+    position: absolute;
+    top: 50%;
+    right: var(--space-3);
+    transform: translateY(-50%);
+    width: 2.75rem;
+    height: 2.75rem;
+    border-radius: 50%;
+    background: var(--neu-surface);
+    border: 0 !important;
+    color: var(--ink-2);
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 240ms cubic-bezier(0.2, 0.8, 0.2, 1);
+    z-index: 3;
+    box-shadow:
+      calc(-1 * var(--neu-distance-sm)) calc(-1 * var(--neu-distance-sm)) var(--neu-blur-sm) var(--neu-shadow-light),
+      var(--neu-distance-sm) var(--neu-distance-sm) var(--neu-blur-sm) var(--neu-shadow-dark);
+    i {
+      font-size: 1.25rem;
+      transition: transform 280ms cubic-bezier(0.2, 0.8, 0.2, 1);
+    }
+    // Hover: hafifçe içe gömük (basılıyor hissi)
+    &:hover {
+      box-shadow:
+        inset 3px 3px 6px var(--neu-shadow-dark),
+        inset -3px -3px 6px var(--neu-shadow-light);
+      color: var(--enrich-detail);
+    }
+    &:focus-visible {
+      outline: 2px solid color-mix(in srgb, var(--enrich-detail) 60%, transparent);
+      outline-offset: 4px;
+    }
+  }
+
+  // -------- Body --------
+  &__body {
+    overflow: hidden;
+    transition:
+      max-height 360ms cubic-bezier(0.2, 0.8, 0.2, 1),
+      opacity 260ms ease,
+      padding 260ms ease;
+  }
+
+  // ============ AÇIK STATE ============
+  &:not(.cluster--collapsed) {
+    // Açıldığında kart daha güçlü kalkar, body INSET (içe gömük)
+    box-shadow:
+      calc(-1 * var(--neu-distance-lg)) calc(-1 * var(--neu-distance-lg)) var(--neu-blur-lg) var(--neu-shadow-light),
+      var(--neu-distance-lg) var(--neu-distance-lg) var(--neu-blur-lg) var(--neu-shadow-dark);
+
+    .cluster__toggle {
+      // Toggle inset → kapatılmış hissi
+      box-shadow:
+        inset 3px 3px 6px var(--neu-shadow-dark),
+        inset -3px -3px 6px var(--neu-shadow-light);
+      color: var(--enrich-detail);
+      i { transform: rotate(180deg); }
+    }
+
+    .cluster__header { border-bottom: 0; }
+
+    .cluster__body {
+      max-height: none;
+      opacity: 1;
+      padding: var(--space-5) var(--space-5) var(--space-6);
+      background: var(--neu-surface);
+      // Body içe gömük neumorphic — kapak kalkmış kutu içi gibi
+      box-shadow:
+        inset 6px 6px 14px var(--neu-shadow-dark),
+        inset -6px -6px 14px var(--neu-shadow-light);
+      border-radius: 0 0 var(--neu-radius) var(--neu-radius);
+      margin: 0 var(--space-3) var(--space-3);
+    }
+
+    // Açık rozetı: header sağ üst köşede mini etiket
+    .cluster__header::after {
+      content: "AÇIK";
+      position: absolute;
+      top: calc(var(--space-1) + 5px);
+      right: calc(4rem + var(--space-3));
+      font-size: 1rem;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      color: var(--enrich-detail);
+      background: color-mix(in srgb, var(--enrich-detail) 12%, transparent);
+      padding: 0.15rem 0.5rem;
+      border-radius: 999px;
+      pointer-events: none;
+    }
+  }
+
+  // ============ KAPALI STATE ============
+  &.cluster--collapsed {
+    .cluster__body {
+      max-height: 0;
+      opacity: 0;
+      padding: 0;
+      pointer-events: none;
+      display: none;                  // boşluk almasın → render maliyeti de düşer
+    }
+    // Collapsed'da header alt boşluğunu KÜÇÜLT — tags'in altında dead space olmasın
+    .cluster__header {
+      padding-bottom: var(--space-3) !important;  // ≈ 12px, en az nefes
+    }
+    .cluster__subtitle,
+    .cluster__tags,
+    .cluster__meta-row {
+      margin-bottom: 0 !important;
+      // Son eleman olduğunda kendi alt padding'i de sıfır
+      &:last-child { padding-bottom: 0 !important; }
+    }
+
+    // Hover: kart daha güçlü yükselir (neumorphic LIFT)
+    &:hover {
+      transform: translateY(-2px);
+      box-shadow:
+        calc(-1 * var(--neu-distance-lg)) calc(-1 * var(--neu-distance-lg)) var(--neu-blur-lg) var(--neu-shadow-light),
+        var(--neu-distance-lg) var(--neu-distance-lg) var(--neu-blur-lg) var(--neu-shadow-dark);
+
+      .cluster__toggle {
+        color: var(--enrich-detail);
+      }
+      &::before { opacity: 1; box-shadow: 0 0 18px color-mix(in srgb, var(--enrich-detail) 90%, transparent); }
+    }
+
+    // Mikro hint: başlık altında "tıkla → aç" yazısı (kapalı durumda)
+    .cluster__title::after {
+      content: " → aç";
+      font-size: 1rem;
+      font-weight: 400;
+      color: var(--ink-3);
+      letter-spacing: 0;
+      text-transform: none;
+      opacity: 0.65;
+      margin-left: 0.5rem;
+    }
+  }
+
+  // ============ FOCUS-VISIBLE — klavye erişilebilirliği ============
+  &__header:focus-visible {
+    outline: 3px solid color-mix(in srgb, var(--enrich-detail) 50%, transparent);
+    outline-offset: -3px;
+    border-radius: var(--radius-lg);
+  }
+}
+
+// ============================================================================
+// CLUSTER — Dark mode redesign
+// ============================================================================
+:root[data-theme="dark"] {
+  .content { background: var(--neu-bg) !important; }
+
+  .cluster {
+    background: var(--neu-surface);
+    border: 0 !important;
+    // Token tabanlı çift gölge (dark token'ları otomatik kullanılır)
+
+    &__header:hover { background: transparent !important; opacity: 0.95; }
+
+    &__toggle {
+      background: var(--neu-surface);
+      border: 0 !important;
+      color: var(--ink-2);
+    }
+
+    &:not(.cluster--collapsed) {
+      // Açık: token tabanlı (dark token'ları otomatik)
+      .cluster__header { border-bottom: 0; }
+      .cluster__body {
+        background: var(--neu-surface);
+        border-top: 0;
+      }
+    }
+    // Dark mode'da hover token'ları zaten otomatik uygulanır.
+  }
+}
+
+// ============================================================================
+// CLUSTER — Mobile optimizasyonu
+// ============================================================================
+@include mobile-only {
+  .cluster {
+    margin-bottom: var(--space-5);
+    border-radius: var(--radius-md);
+
+    &__header {
+      padding: var(--space-3) var(--space-3);
+      padding-right: 3.5rem;
+      padding-top: calc(var(--space-3) + 5px);
+    }
+    &__toggle {
+      width: 2.5rem;
+      height: 2.5rem;
+      top: calc(var(--space-2) + 5px);
+      right: var(--space-2);
+      i { font-size: 1.1rem; }
+    }
+    &:not(.cluster--collapsed) .cluster__body {
+      padding: var(--space-3) var(--space-3) var(--space-4);
+    }
+    // Mobilde "AÇIK" rozeti çakışıyor → gizle
+    &:not(.cluster--collapsed) .cluster__header::after { display: none; }
+    // Mobilde "tıkla → aç" hint daha minik
+    &.cluster--collapsed .cluster__title::after {
+      display: block;
+      margin-left: 0;
+      margin-top: 0.2rem;
+    }
+  }
+}
+
+// ============================================================================
+// CLUSTER v2 — eski kuralları override için sonra gelen blok
+// (Aşağıda eski kurallar duruyor; v2 stilleri specificity üstünlüğü için
+//  body[data-theme] altında olmasalar da `:root[data-theme] .cluster` ile
+//  tutuluyor.)
+// ============================================================================
+
+// Eski legacy kalıntısı temizlendi — yeni v2 dark mode bloğu yukarıda.
+
+// Uzun string/code mobilde sığsın
+pre, code { max-width: 100%; word-break: break-word; white-space: pre-wrap; }
+.block-code pre { white-space: pre; overflow-x: auto; }
+.block-code__summary { flex-wrap: wrap; }
+img, iframe, video { max-width: 100%; height: auto; }
+input, select, textarea { max-width: 100%; }
+
+// Layer cards 4-5 sütun zorlamasın 320'de
+@include sm-only {
+  .block-layer-cards { grid-template-columns: 1fr !important; }
+  .gran-grid { grid-template-columns: 1fr !important; }
+  .block-grid--cols-2, .block-grid--cols-3 { grid-template-columns: 1fr !important; }
+  // 5N1K key-val tek satıra
+  .dp__5n1k-row { grid-template-columns: 1fr !important; }
+}
+
+.appbar {
+  position: sticky;
+  top: 0;
+  z-index: 70;
+  display: grid;
+  width: 100%;
+  // MOBILE (320px+): menu + brand + actions (search ayrı satıra)
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  grid-template-areas: "menu brand actions" "search search search";
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-2);
+  background: color-mix(in srgb, var(--bg) 92%, transparent);
+  backdrop-filter: saturate(140%) blur(8px);
+  border-bottom: 1px solid var(--line-2);
+  box-sizing: border-box;
+
+  &__menu {
+    grid-area: menu;
+    background: none;
+    border: 0;
+    cursor: pointer;
+    width: 2.25rem; height: 2.25rem;
+    border-radius: var(--radius-md);
+    color: var(--ink);
+    display: inline-flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    &:hover { background: var(--bg-soft); }
+    i { font-size: 1.15rem; }
+
+    @media (min-width: 980px) { display: none; }
+  }
+
+  &__brand {
+    grid-area: brand;
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    font-weight: 500;
+    font-size: 1rem;
+    color: var(--ink);
+    text-decoration: none;
+    padding: var(--space-1) var(--space-2);
+    border-radius: var(--radius-md);
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    i { font-size: 1.25rem; color: var(--l1); flex-shrink: 0; }
+
+    // Çok dar ekranda sadece icon (320–419)
+    @include sm-only {
+      span { display: none; }
+    }
+    @media (min-width: 720px) { font-size: var(--fs-md); }
+    &:hover { background: var(--bg-soft); }
+  }
+
+  &__search {
+    grid-area: search;
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+    overflow: hidden;
+    @media (min-width: 720px) {
+      grid-area: auto;
+      max-width: 36rem;
+      justify-self: center;
+      min-width: 16rem;
+    }
+  }
+  // Tablet+: tek satır layout
+  @media (min-width: 720px) {
+    grid-template-columns: auto auto 1fr auto !important;
+    grid-template-areas: "menu brand search actions" !important;
+    padding: var(--space-3) var(--space-4);
+  }
+
+  &__actions {
+    grid-area: actions;
+    display: inline-flex;
+    gap: var(--space-1);
+    flex-shrink: 0;
+  }
+  &__action {
+    width: 2.25rem; height: 2.25rem;
+    border-radius: var(--radius-md);
+    background: var(--bg);
+    border: 1px solid var(--line);
+    color: var(--ink-2);
+    cursor: pointer;
+    display: inline-flex; align-items: center; justify-content: center;
+    text-decoration: none;
+    transition: all 120ms ease;
+    flex-shrink: 0;
+    i { font-size: 1rem; }
+    &:hover { color: var(--ink); border-color: var(--ink-4); }
+  }
+}
+
+// Search box mobile içinde kompakt + sıkı bound
+.search-box, .search-box__inner { max-width: 100%; min-width: 0; box-sizing: border-box; }
+.search-box__input { min-width: 0; max-width: 100%; width: 100%; }
+.appbar .search-box__inner {
+  padding: var(--space-1) var(--space-2) !important;
+  width: 100%;
+}
+.appbar .search-box__input { font-size: 1rem !important; }
+// Slash hint mobilde gizle (sığmayabilir)
+@include sm-only {
+  .search-box__hint { display: none !important; }
+}
+
+// HERO meta — mobilde wrap
+.hero__meta {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  gap: var(--space-3) var(--space-4) !important;
+  font-size: 1rem;
+  @include sm-only { gap: var(--space-2) var(--space-3) !important; }
+}
+.hero__meta span { white-space: nowrap; }
+
+// FILTER BAR — mobilde cömert wrap, tek satırda zorlamadan
+.filter-bar {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  align-items: flex-start;
+
+  &__group {
+    display: flex !important;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-2) !important;
+    width: 100%;
+    @media (min-width: 720px) { flex-direction: row; align-items: center; width: auto; }
+  }
+  &__label { font-size: 1rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--ink-3); }
+  &__chips {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: var(--space-1) !important;
+    max-width: 100%;
+  }
+}
+.chip {
+  font-size: 1rem !important;
+  padding: var(--space-1) var(--space-3) !important;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+@include sm-only {
+  .chip { padding: var(--space-1) var(--space-2) !important; font-size: 1rem !important; }
+}
+
+// Sidebar artık brand+search içermiyor; brand'i appbar tutuyor
+.sidebar { padding-top: var(--space-3) !important; }
+
+// Mobile menu toggle artık appbar içinde — eski floating'i gizle
+.mobile-menu-toggle { display: none !important; }
+
+// ============================================================================
+// FOOTER
+// ============================================================================
+.appfooter {
+  margin-top: var(--space-9);
+  padding: var(--space-7) var(--space-5);
+  border-top: 1px solid var(--line-2);
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-5);
+  color: var(--ink-3);
+  font-size: 1rem;
+
+  @media (min-width: 720px) { grid-template-columns: repeat(3, 1fr); }
+
+  strong { display: block; color: var(--ink); font-weight: 500; margin-bottom: var(--space-2); }
+  kbd {
+    font-family: 'Roboto Mono', monospace;
+    background: var(--bg-soft);
+    border: 1px solid var(--line);
+    padding: 0.05rem 0.4rem;
+    border-radius: var(--radius-sm);
+    font-size: 1rem;
+    margin: 0 0.15rem;
+  }
+}
+
+// ============================================================================
+// DARK MODE
+// ============================================================================
+:root[data-theme="dark"] {
+  --bg: #15171a;
+  --bg-soft: #1c1f23;
+  --bg-softer: #20242a;
+  --bg-page: #181b1f;
+  --line: #2a2e34;
+  --line-2: #23272d;
+  // Neumorphism dark — kontrast ters çevrilir
+  --neu-bg: #181b1f;
+  --neu-surface: #181b1f;
+  --neu-shadow-light: rgba(255, 255, 255, 0.04);
+  --neu-shadow-dark: rgba(0, 0, 0, 0.65);
+  --ink: #ebebed;
+  --ink-2: #c2c5cb;
+  --ink-3: #8a8f96;
+  --ink-4: #83878e;  // R3 a11y: 2.8→4.6:1 (dark yüzeylerde WCAG AA)
+  --ink-5: #3a3e44;
+  --code-bg: #1a1d22;
+  --card-bg: #1c1f23;
+  --card-bg-soft: #1f2329;
+  --card-border: #2a2e34;
+}
+:root[data-theme="dark"] {
+  --kernel-soft: #2a1a1a;
+  --scale-soft:  #211a2a;
+  --l1-soft:     #1a2624;
+  --l2-soft:     #1a2230;
+  --atomic-soft: #2a2218;
+  --warn-soft:   #2a2218;
+  --tr-soft:     #2a1a1d;
+  --state-ok-bg:        #173225;
+  --state-missing-bg:   #311c1c;
+  --state-critical-bg:  #311c1c;
+  --state-partial-bg:   #2a1f10;
+  --state-planned-bg:   #221833;
+  --state-wip-bg:       #182333;
+  --state-blocked-bg:   #1a1c20;
+  --state-deprecated-bg:#1c1f24;
+
+  // Education / lesson tema
+  --edu:        #4dd9d4;        // light teal — dark üzerinde okunaklı
+  --edu-soft:   #16302e;        // soft dark teal
+  --edu-accent: #ffd166;
+
+  // Card / cluster yüzeyleri
+  --card-bg:       #1c1f23;
+  --card-bg-soft:  #1f2329;
+  --card-border:   #2a2e34;
+
+  // Enrich button renkleri (dark)
+  --enrich-info:   #6aa3ff;
+  --enrich-detail: #c79bff;
+}
+
+// ============================================================================
+// DARK MODE — TÜM BLOCK + COMPONENT KAPSAMI (P1 denetimi)
+// ============================================================================
+:root[data-theme="dark"] {
+  // --- Lesson header ---
+  .lesson-header {
+    background: var(--edu-soft);
+    border-color: color-mix(in srgb, var(--edu) 30%, transparent);
+    border-left-color: var(--edu);
+  }
+  .lesson-header__unit,
+  .lesson-header__goals-title,
+  .lesson-header__prereq a { color: var(--edu) !important; }
+  .lesson-header__title { color: var(--ink) !important; }
+  .lesson-header__prereq { color: var(--ink-2) !important; }
+  .lesson-header__goals ul li { color: var(--ink-2) !important; }
+  .lesson-header__time { color: var(--ink-3) !important; }
+
+  // --- Cluster body genel okunabilirlik ---
+  .cluster__body p,
+  .cluster__body li,
+  .feature-list__desc { color: var(--ink-2); }
+
+  // --- Sidebar / Hero / Footer ---
+  .sidebar { background: var(--bg-soft); }
+  .hero { background: var(--bg); }
+  .appbar {
+    background: color-mix(in srgb, var(--bg) 92%, transparent);
+    border-bottom-color: var(--line);
+  }
+  .appfooter { border-top-color: var(--line); }
+
+  // --- Tag chips ---
+  .tag {
+    background: var(--bg-soft);
+    color: var(--ink-3);
+    border: 1px solid var(--line-2);
+  }
+
+  // --- Callout ---
+  .block-callout {
+    background: var(--card-bg-soft);
+    border-color: var(--line);
+    color: var(--ink-2);
+  }
+  .block-callout__title { color: var(--ink); }
+
+  // --- Block-table: header + zebra + sticky + hover ---
+  .block-table {
+    background: var(--bg-soft);
+    border-color: var(--line);
+    color: var(--ink-2);
+
+    thead { background: #20242a; }
+    th {
+      background: #20242a;
+      color: var(--ink);
+      border-bottom: 1px solid var(--line);
+      position: sticky;
+      top: 0;
+      z-index: 2;
+    }
+    td { border-color: var(--line-2); color: var(--ink-2); }
+    tr:nth-child(even) td { background: color-mix(in srgb, var(--bg-soft) 80%, transparent); }
+    tr:hover td { background: #252930; }
+    tr.is-clickable { cursor: pointer; }
+  }
+  .block-table__wrap {
+    border: 1px solid var(--line);
+    border-radius: var(--radius-md);
+    background: #1a1d22; // wrap zemini, tablo bg-soft'tan biraz daha koyu — kontrast
+    box-shadow: 0 1px 0 var(--line);
+    margin-bottom: 2.25rem;
+  }
+  .block-table tr:last-child td { border-bottom: none; }
+
+  // --- Block-code (accordion) ---
+  .block-code {
+    background: var(--code-bg);
+    border-color: var(--line);
+  }
+  .block-code__summary {
+    background: #1f2329;
+    color: var(--ink);
+    border-bottom: 1px solid var(--line-2);
+    &:hover { background: #252930; }
+    i { color: var(--ink-3); }
+  }
+  .block-code__lang,
+  .block-code__lines {
+    background: var(--bg);
+    color: var(--ink-3);
+    border: 1px solid var(--line-2);
+  }
+  .block-code pre {
+    background: var(--code-bg) !important;
+    color: var(--ink) !important;
+  }
+  .block-code__copy {
+    background: var(--bg-soft);
+    color: var(--ink-2);
+    border: 1px solid var(--line);
+    &:hover { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+  }
+
+  // --- Block-tree ---
+  .block-tree {
+    color: var(--ink-2);
+    .tree-node { border-left-color: var(--line); }
+    .tree-node__bullet { color: var(--enrich-detail); }
+    .tree-node__name { color: var(--ink); }
+  }
+
+  // --- Block-ref-grid ---
+  .block-ref-grid__item {
+    background: var(--card-bg-soft);
+    border: 1px solid var(--line-2);
+    color: var(--ink);
+    &:hover {
+      background: var(--bg-soft);
+      border-color: var(--enrich-detail);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+    }
+  }
+
+  // --- Popover (.pop) ---
+  .pop {
+    background: #1c1f23 !important;
+    border: 1px solid var(--line) !important;
+    color: var(--ink-2);
+    box-shadow: 0 12px 40px rgba(0,0,0,0.6) !important;
+    max-height: 70vh;
+    overflow-y: auto;
+  }
+  .pop__arrow { background: #1c1f23 !important; border-color: var(--line) !important; }
+  .pop__short { color: var(--ink); }
+  .pop__section h6 { color: var(--enrich-detail); border-color: var(--line-2); }
+  .pop__term { background: var(--bg-soft); border-color: var(--line-2); }
+  .pop__abbrev strong { color: var(--ink); }
+  .pop__tr { color: var(--ink-3); }
+  .pop__meaning { color: var(--ink-2); }
+  .pop__why { color: var(--ink-3); em { color: var(--enrich-info); } }
+  .pop__story { background: var(--bg-soft); border-color: var(--line-2); }
+  .pop__persona { color: var(--ink); }
+  .pop__context { color: var(--ink-2); }
+  .pop__outcome { color: var(--enrich-info); }
+
+  // --- Search box ---
+  .search-box__inner {
+    background: var(--bg-soft);
+    border: 1px solid var(--line);
+    color: var(--ink);
+  }
+  .search-box__input {
+    color: var(--ink);
+    &::placeholder { color: var(--ink-4); }
+  }
+  .search-box__hint {
+    background: var(--bg);
+    color: var(--ink-3);
+    border: 1px solid var(--line-2);
+  }
+  .search-box__results {
+    background: #1c1f23;
+    border: 1px solid var(--line);
+    box-shadow: 0 12px 40px rgba(0,0,0,0.6);
+  }
+  .search-box__result {
+    color: var(--ink-2);
+    border-bottom: 1px solid var(--line-2);
+    &:hover, &.is-active {
+      background: var(--bg-soft);
+      color: var(--ink);
+    }
+    mark {
+      background: color-mix(in srgb, var(--enrich-info) 30%, transparent);
+      color: var(--enrich-info);
+    }
+  }
+  .search-box__empty { color: var(--ink-3); }
+
+  // --- Filter bar ---
+  .filter-bar {
+    background: var(--bg-soft);
+    border: 1px solid var(--line-2);
+  }
+  .filter-bar__label { color: var(--ink-3); }
+  .chip {
+    background: var(--bg);
+    color: var(--ink-2);
+    border-color: var(--line);
+    &:hover:not(.chip--active) {
+      background: var(--bg-soft);
+      border-color: var(--ink-4);
+      color: var(--ink);
+    }
+    &.chip--active {
+      background: var(--enrich-detail);
+      color: #0a0a0a;
+      border-color: var(--enrich-detail);
+      &:hover { background: var(--enrich-detail); color: #0a0a0a; }
+    }
+  }
+
+  // --- Granularity chip ve State chip (light bg → dark soft) ---
+  .gran-chip {
+    background: var(--bg-soft);
+    color: var(--ink-2);
+    border: 1px solid var(--line);
+    &__sp { color: var(--ink-3); }
+  }
+  .state-chip {
+    border: 1px solid var(--line-2);
+    color: var(--ink);
+    &--ok { background: var(--state-ok-bg); color: #4ade80; }
+    &--missing, &--critical { background: var(--state-critical-bg); color: #ff7a7a; }
+    &--partial { background: var(--state-partial-bg); color: #ffb347; }
+    &--planned { background: var(--state-planned-bg); color: #c79bff; }
+    &--wip { background: var(--state-wip-bg); color: #6aa3ff; }
+    &--blocked { background: var(--state-blocked-bg); color: var(--ink-3); }
+    &--deprecated { background: var(--state-deprecated-bg); color: var(--ink-4); }
+  }
+
+  // --- 5N1K kartları ---
+  .dp__5n1k-row {
+    background: var(--bg-soft);
+    border-left: 3px solid var(--enrich-detail);
+    color: var(--ink-2);
+  }
+  .dp__5n1k-key { color: var(--enrich-detail); }
+  .dp__5n1k-val { color: var(--ink-2); }
+
+  // --- FE/BE side cards ---
+  .dp__side--fe {
+    background: color-mix(in srgb, var(--enrich-info) 12%, var(--bg-soft));
+    border-left: 3px solid var(--enrich-info);
+  }
+  .dp__side--be {
+    background: color-mix(in srgb, #d97706 14%, var(--bg-soft));
+    border-left: 3px solid #d97706;
+  }
+  .dp__side-label { color: var(--ink); }
+  .dp__side-row { color: var(--ink-2); border-color: var(--line-2); }
+
+  // --- Detail panel terim ve story ---
+  .dp__term {
+    background: var(--bg-soft);
+    border: 1px solid var(--line-2);
+  }
+  .dp__term-head strong { color: var(--ink); }
+  .dp__term-abbrev { color: var(--enrich-info); }
+  .dp__term-tr { color: var(--ink-3); }
+  .dp__term-meaning { color: var(--ink-2); }
+  .dp__term-why { color: var(--ink-3); span { color: var(--enrich-detail); } }
+  .dp__story {
+    background: var(--bg-soft);
+    border: 1px solid var(--line-2);
+  }
+  .dp__story-persona { color: var(--ink); i { color: var(--enrich-detail); } }
+  .dp__story-context, .dp__story-outcome { color: var(--ink-2); }
+  .dp__story-tag {
+    background: var(--bg);
+    color: var(--ink-3);
+    border: 1px solid var(--line-2);
+    &--out { color: var(--enrich-info); border-color: var(--enrich-info); }
+  }
+  .dp__close {
+    background: var(--bg);
+    border-color: var(--line);
+    color: var(--ink-2);
+    &:hover { background: var(--ink); color: var(--bg); }
+  }
+  .dp__context { color: var(--enrich-detail); }
+  .dp__title { color: var(--ink); }
+  .dp__summary { color: var(--ink-2); }
+  .dp__section h4 { color: var(--enrich-detail); border-color: var(--line-2); }
+  .dp__detail { color: var(--ink-2); }
+  .dp__empty {
+    color: var(--ink-3);
+    code { background: var(--bg-soft); color: var(--ink); border: 1px solid var(--line); }
+  }
+  .dp__ref {
+    background: var(--bg-soft);
+    border: 1px solid var(--line-2);
+    color: var(--ink-2);
+    &:hover { background: var(--bg); color: var(--ink); border-color: var(--enrich-detail); }
+  }
+
+  // --- Checklist ---
+  .checklist__item {
+    background: var(--bg-soft);
+    border: 1px solid var(--line-2);
+    &.is-done {
+      background: color-mix(in srgb, var(--state-ok-bg) 60%, var(--bg-soft));
+      .checklist__label { color: var(--ink-3); text-decoration: line-through; }
+    }
+  }
+  .checklist__check {
+    border-color: var(--ink-4);
+    &.is-checked {
+      background: #4ade80;
+      border-color: #4ade80;
+      color: var(--bg);
+    }
+  }
+  .checklist__label { color: var(--ink); }
+  .checklist__hint { color: var(--ink-3); }
+
+  // --- Steps ---
+  .step {
+    background: var(--bg-soft);
+    border: 1px solid var(--line-2);
+  }
+  .step__num {
+    background: var(--enrich-detail);
+    color: var(--bg);
+  }
+  .step__title { color: var(--ink); }
+  .step__body { color: var(--ink-2); }
+
+  // --- User stories ---
+  .story-card {
+    background: var(--bg-soft);
+    border: 1px solid var(--line-2);
+    color: var(--ink-2);
+  }
+  .story-card__persona { color: var(--ink); }
+  .story-card__tag {
+    background: var(--bg);
+    color: var(--ink-3);
+    border: 1px solid var(--line-2);
+  }
+
+  // --- Terms block ---
+  .block-terms {
+    background: var(--bg-soft);
+    border: 1px solid var(--line-2);
+  }
+  .block-terms__pair {
+    background: var(--bg);
+    border: 1px solid var(--line);
+    dt { color: var(--ink); }
+    dd { color: var(--ink-2); }
+  }
+
+  // --- Layer cards (üst-renk vurgusu zaten layer renkleri ile) ---
+  .layer-card {
+    background: var(--bg-soft);
+    color: var(--ink-2);
+    h5, h6 { color: var(--ink); }
+  }
+
+  // --- Granularity grid ---
+  .gran-grid__item {
+    background: var(--bg-soft);
+    border: 1px solid var(--line-2);
+    color: var(--ink-2);
+  }
+  .gran-grid__label { color: var(--ink); }
+  .gran-grid__sp { color: var(--enrich-detail); }
+  .gran-grid__counts { color: var(--ink-2); strong { color: var(--ink); } }
+  .gran-grid__desc { color: var(--ink-3); }
+
+  // --- Block-grid + block-examples ---
+  .block-grid__item {
+    background: var(--card-bg-soft);
+    border: 1px solid var(--card-border);
+    color: var(--ink-2);
+    h5, h6, strong { color: var(--ink); }
+  }
+  .block-examples li {
+    background: var(--card-bg-soft);
+    border: 1px solid var(--card-border);
+    color: var(--ink-2);
+  }
+
+  // --- Feature list ---
+  .feature-list__item {
+    background: var(--card-bg-soft);
+    border-color: var(--card-border);
+    color: var(--ink-2);
+    &--critical {
+      background: var(--state-critical-bg);
+      border-color: color-mix(in srgb, #ff7a7a 30%, transparent);
+    }
+  }
+  .feature-list__name { color: var(--ink); }
+  .feature-list__desc { color: var(--ink-2); }
+
+  // --- Sidebar TOC ---
+  .toc a {
+    color: var(--ink-2);
+    &:hover { background: var(--bg-soft); color: var(--ink); }
+    &.is-active {
+      background: color-mix(in srgb, var(--enrich-detail) 18%, var(--bg-soft));
+      color: var(--ink);
+    }
+  }
+  .toc__group {
+    color: var(--ink-3);
+    border-color: var(--line-2);
+  }
+
+  // --- Sidebar legend ---
+  .sidebar__gran-legend {
+    color: var(--ink-3);
+    border-top-color: var(--line-2);
+    &__row { color: var(--ink-2); i { color: var(--enrich-detail); } }
+    &__sp { color: var(--ink-3); }
+    &__title { color: var(--ink-3); }
+  }
+
+  // --- Enrich buttons (!/?) ---
+  .enrich-btn--info {
+    background: color-mix(in srgb, var(--enrich-info) 18%, var(--bg-soft));
+    color: var(--enrich-info);
+    border: 1px solid color-mix(in srgb, var(--enrich-info) 35%, transparent);
+    &:hover { background: var(--enrich-info); color: var(--bg); }
+  }
+  .enrich-btn--detail {
+    background: color-mix(in srgb, var(--enrich-detail) 18%, var(--bg-soft));
+    color: var(--enrich-detail);
+    border: 1px solid color-mix(in srgb, var(--enrich-detail) 35%, transparent);
+    &:hover { background: var(--enrich-detail); color: var(--bg); }
+  }
+
+  // --- Hero meta + filter-bar info ---
+  .hero__eyebrow, .hero__meta { color: var(--ink-3); }
+  .hero__lede { color: var(--ink-2); }
+  .hero__title { color: var(--ink); }
+
+  // --- Code (inline) ---
+  code {
+    background: var(--code-bg);
+    color: var(--enrich-info);
+    border: 1px solid var(--line-2);
+  }
+
+  // --- Mobile menu toggle / dark toggle ---
+  .appbar__action, .appbar__menu, .mobile-menu-toggle {
+    background: var(--bg-soft);
+    border-color: var(--line);
+    color: var(--ink-2);
+    &:hover { background: var(--ink-5); color: var(--ink); border-color: var(--ink-4); }
+  }
+
+  // --- KV row tıklanır pair ---
+  .block-kv__pair {
+    background: var(--card-bg-soft);
+    border: 1px solid var(--card-border);
+    dt { color: var(--ink); }
+    dd { color: var(--ink-2); }
+  }
+}
+
+// Cluster header — clickable variant
+.cluster__header.is-clickable {
+  border-radius: var(--radius-lg);
+  padding: 1rem 1.25rem;
+  margin: -0.5rem -0.75rem 1rem;
+
+  &:hover {
+    background: var(--bg-soft) !important;
+  }
+}
+
+// ============================================================================
+// UI estetik genel iyileştirme
+// ============================================================================
+
+// Cluster card → daha yumuşak
+.cluster {
+  margin-bottom: 3rem;
+  padding: 0;
+
+  &__header {
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--line-2);
+  }
+
+  &--highlight {
+    animation: cluster-pulse 1.5s ease;
+  }
+}
+@keyframes cluster-pulse {
+  0%, 100% { background: var(--bg); }
+  20% { background: color-mix(in srgb, var(--enrich-detail) 6%, var(--bg)); }
+}
+
+// Feature list daha cömert paddings
+.feature-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+
+  &__item {
+    padding: 0.85rem 1rem 0.95rem;
+    background: var(--bg-soft);
+    border: 1px solid transparent;
+    border-radius: var(--radius);
+
+    &--critical {
+      background: var(--state-critical-bg);
+      border-color: color-mix(in srgb, var(--state-critical) 20%, transparent);
+    }
+  }
+  &__desc {
+    color: var(--ink-2);
+    margin-top: 0.2rem;
+    font-size: 1rem;
+    line-height: 1.55;
+  }
+  &__name {
+    font-weight: 500;
+    color: var(--ink);
+  }
+}
+
+// List items
+.block-list {
+  li { padding: 0.35rem 0; }
+  li.is-clickable {
+    padding: 0.55rem 0.85rem;
+    background: var(--bg-soft);
+    border-radius: var(--radius);
+    margin: 0.2rem 0;
+  }
+}
+
+// Grid items → daha kart-tipi
+.block-grid__item {
+  border-radius: var(--radius-lg);
+  padding: 1.1rem 1.2rem;
+  background: var(--bg-soft);
+  border: 1px solid transparent;
+  transition: all 140ms ease;
+}
+
+// Hero → daha sade
+.hero {
+  background: var(--bg);
+  &__title { letter-spacing: -0.025em; }
+}
+
+// Sidebar
+.sidebar {
+  background: var(--bg-soft);
+  border-right: 1px solid var(--line-2);
+}
+
+// Filter bar genel
+.filter-bar {
+  background: var(--bg-soft);
+  padding: 0.75rem 1rem;
+  border-radius: var(--radius-lg);
+  margin-bottom: 2rem;
+}
+
+// Genel link/hover yumuşatma
+a.link--external, .ref--internal { transition: color 120ms; }
+
+// ------ Responsive (sadece içerik tipografi/grid — layout YOK) ------
+@include nav-down {
+  .block-grid--cols-2,
+  .block-grid--cols-3 { grid-template-columns: 1fr; }
+  .block-layer-cards { grid-template-columns: 1fr 1fr; }
+  .hero__title { font-size: 1.75rem; }
+  .pop { max-width: calc(100vw - 2rem); }
+}
+
+// ============================================================================
+// P0-B Block tipleri sweep — daha önce dark mode'da boşlukta kalan bloklar
+// ============================================================================
+:root[data-theme="dark"] {
+  // --- Block-paragraph ---
+  .block-paragraph { color: var(--ink-2); }
+  .block-paragraph strong { color: var(--ink); }
+  .block-paragraph em { color: var(--enrich-info); }
+
+  // --- Block-heading ---
+  .block-heading { color: var(--ink); }
+  .block-heading--h2 { border-bottom-color: var(--line); }
+
+  // --- Block-divider ---
+  .block-divider { border-top-color: var(--line); }
+
+  // --- Block-list ---
+  .block-list { color: var(--ink-2); }
+  .block-list li::marker { color: var(--ink-4); }
+
+  // --- Block-kv-row / pair ---
+  .block-kv,
+  .block-kv__pair {
+    background: var(--bg-soft);
+    border-color: var(--line-2);
+    color: var(--ink-2);
+  }
+  .block-kv__key { color: var(--ink); }
+  .block-kv__value { color: var(--ink-2); }
+
+  // --- Block-steps ---
+  .block-steps { color: var(--ink-2); }
+  .step {
+    background: var(--card-bg-soft, var(--bg-soft));
+    border: 1px solid var(--line-2);
+    color: var(--ink-2);
+  }
+  .step__num {
+    background: var(--enrich-detail);
+    color: var(--bg);
+  }
+  .step__title { color: var(--ink); }
+  .step__body { color: var(--ink-2); }
+
+  // --- Block-user-stories ---
+  .block-user-stories { color: var(--ink-2); }
+  .story-card__title { color: var(--ink); }
+
+  // --- Block-checklist (görünür item) ---
+  .block-checklist { color: var(--ink-2); }
+  .block-checklist__head { color: var(--ink); }
+  .block-checklist__progress {
+    background: var(--bg-soft);
+    color: var(--ink);
+    border: 1px solid var(--line-2);
+  }
+  .checklist__item {
+    background: var(--card-bg-soft, var(--bg-soft));
+    border-color: var(--line-2);
+    color: var(--ink-2);
+  }
+  .checklist__item--done {
+    opacity: 0.6;
+    text-decoration: line-through var(--ink-4);
+  }
+  .checklist__label { color: var(--ink); }
+  .checklist__hint { color: var(--ink-3); }
+  .checklist__opt { color: var(--ink-4); }
+
+  // --- Lesson-header ---
+  .lesson-header {
+    background: var(--bg-soft);
+    border-color: var(--line-2);
+    color: var(--ink-2);
+  }
+  .lesson-header__title { color: var(--ink); }
+  .lesson-header__meta { color: var(--ink-3); }
+
+  // --- Granularity-legend (sidebar) ---
+  .sidebar__gran-legend {
+    background: var(--bg);
+    border-top: 1px solid var(--line-2);
+    color: var(--ink-3);
+  }
+  .sidebar__gran-legend__title { color: var(--ink-2); }
+  .sidebar__gran-legend__row { color: var(--ink-2); i { color: var(--enrich-detail); } }
+  .sidebar__gran-legend__sp { color: var(--ink-3); }
+}
+
+// ============================================================================
+// P0-B A11y — focus visible standardı tüm interaktif elemanlarda
+// ============================================================================
+:where(a, button, [role="button"], [tabindex="0"], input, select, textarea, summary, .is-clickable):focus-visible {
+  outline: 2px solid var(--enrich-detail);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm, 4px);
+}
+
+// Skip-to-content link — ekran okuyucu + klavye kullanıcısı için
+.skip-to-content {
+  position: absolute;
+  left: -9999px;
+  top: 0;
+  z-index: 9999;
+  background: var(--ink);
+  color: var(--bg);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-sm);
+  text-decoration: none;
+  font-weight: 500;
+
+  &:focus,
+  &:focus-visible {
+    left: var(--space-3);
+    top: var(--space-3);
+  }
+}
+
+// ============================================================================
+// Reading progress bar — sayfa scroll yüzdesi
+// ============================================================================
+.reading-progress {
+  position: fixed;
+  top: var(--appbar-h, 56px);
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: transparent;
+  z-index: 50;
+  pointer-events: none;
+}
+.reading-progress__fill {
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, var(--enrich-detail, #2563eb), var(--enrich-info, #2e7d32));
+  transition: width 100ms linear;
+}
+
+// Compare view — iki cluster yan yana
+.compare-view {
+  &__head {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: var(--space-3) 0 var(--space-3);
+    border-bottom: 1px solid var(--line);
+    margin-bottom: var(--space-5);
+    h2 {
+      margin: 0; font-size: 1.3rem; font-weight: 500;
+      display: inline-flex; align-items: center; gap: 0.5rem;
+      i { color: var(--enrich-detail); }
+    }
+  }
+  &__close {
+    background: var(--bg-soft); border: 1px solid var(--line);
+    padding: var(--space-2) var(--space-3); border-radius: var(--radius-md);
+    cursor: pointer; font: inherit; font-size: 1rem;
+    display: inline-flex; align-items: center; gap: 0.4rem;
+    &:hover { background: var(--bg); border-color: var(--ink-4); }
+  }
+  &__grid {
+    display: grid; gap: var(--space-4);
+    grid-template-columns: 1fr;
+    @media (min-width: 1024px) { grid-template-columns: 1fr 1fr; }
+  }
+  &__col {
+    position: relative;
+    .cluster { margin-bottom: 0; }
+  }
+  &__col-close {
+    position: absolute; top: var(--space-2); right: var(--space-2);
+    z-index: 10;
+    background: var(--bg); border: 1px solid var(--line);
+    width: 2rem; height: 2rem; border-radius: 50%;
+    cursor: pointer; display: inline-flex; align-items: center; justify-content: center;
+    color: var(--ink-3);
+    &:hover { background: var(--bg-soft); color: var(--ink); }
+  }
+  &__missing {
+    background: var(--bg-soft); border: 1px dashed var(--line);
+    border-radius: var(--radius-md); padding: var(--space-5);
+    text-align: center;
+    i { font-size: 2rem; color: var(--ink-3); display: block; margin-bottom: var(--space-2); }
+    strong { display: block; margin-bottom: var(--space-3); color: var(--ink-2); }
+  }
+  &__picker {
+    margin-top: var(--space-4); padding: var(--space-3) var(--space-4);
+    background: var(--bg-soft); border-radius: var(--radius-md);
+    color: var(--ink-3); font-size: 1rem;
+    code { background: var(--bg); padding: 0.1rem 0.35rem; border-radius: 3px; font-family: 'Roboto Mono', monospace; }
+  }
+}
+
+// Search recent queries
+.search-box__recent {
+  padding: var(--space-2);
+
+  &-head {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: var(--space-1) var(--space-2);
+    color: var(--ink-3); font-size: 1rem;
+    border-bottom: 1px solid var(--line-2);
+    margin-bottom: var(--space-1);
+
+    i { font-size: 1rem; margin-right: 0.4rem; }
+  }
+  &-clear {
+    background: none; border: 0; cursor: pointer;
+    color: var(--ink-3); font-size: 1rem;
+    padding: 0.2rem 0.5rem; border-radius: var(--radius-sm, 4px);
+    &:hover { background: var(--bg-soft); color: var(--ink-2); }
+  }
+  &-item {
+    display: block; width: 100%; text-align: left;
+    background: none; border: 0; cursor: pointer;
+    color: var(--ink-2); font-size: 1rem;
+    padding: var(--space-2) var(--space-3);
+    border-radius: var(--radius-sm, 4px);
+    &::before { content: "↗"; color: var(--ink-4); margin-right: 0.5rem; }
+    &:hover { background: var(--bg-soft); color: var(--ink); }
+  }
+}
+:root[data-theme="dark"] .search-box__recent-head { border-color: var(--line-2); }
+
+// Appbar bookmark badge — sayaç
+.appbar__action { position: relative; }
+.appbar__badge {
+  position: absolute;
+  top: 4px; right: 4px;
+  min-width: 1rem; height: 1rem;
+  padding: 0 0.3rem;
+  background: var(--enrich-detail, #f5b400);
+  color: #fff;
+  border-radius: 999px;
+  font-size: 1rem;
+  font-weight: 500;
+  display: inline-flex; align-items: center; justify-content: center;
+  line-height: 1;
+}
+
+// Bookmark butonu — cluster header
+.cluster__bookmark {
+  background: none;
+  border: 0;
+  cursor: pointer;
+  color: var(--ink-3);
+  padding: var(--space-1);
+  border-radius: var(--radius-sm, 6px);
+  display: inline-flex;
+  align-items: center;
+  font-size: 1.25rem;
+  transition: color 140ms;
+
+  &:hover { color: var(--enrich-detail, #f5b400); background: var(--bg-soft); }
+  &:focus-visible { outline: 2px solid var(--enrich-detail, #2563eb); outline-offset: 2px; }
+  &--on { color: #f5b400; }
+}
+
+// Sidebar desktop collapse butonu
+.sidebar__collapse {
+  position: absolute;
+  top: var(--space-2);
+  right: calc(-1 * var(--space-3));
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: 50%;
+  background: var(--bg);
+  border: 1px solid var(--line);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: var(--ink-3);
+  z-index: 5;
+
+  @media (min-width: 1024px) {
+    display: inline-flex;
+  }
+  &:hover { color: var(--ink); background: var(--bg-soft); }
+  i { font-size: 1rem; transition: transform 200ms; }
+}
+
+@media (min-width: 1024px) {
+  body.sidebar-collapsed {
+    .sidebar {
+      width: 2.5rem !important;
+      min-width: 2.5rem !important;
+      overflow: hidden;
+      .toc, .toc__quickfilter, .sidebar__gran-legend { display: none; }
+    }
+    .sidebar__collapse i { transform: rotate(180deg); }
+    .main { margin-left: 0; }
+  }
+}
+
+// ============================================================================
+// Media + diagram block: image / video / mermaid
+// ============================================================================
+.block-image, .block-video, .block-mermaid {
+  margin: var(--space-3) 0 var(--space-4);
+  background: var(--bg-soft);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  padding: var(--space-3);
+  text-align: center;
+
+  img, video {
+    max-width: 100%;
+    height: auto;
+    border-radius: var(--radius-sm, 6px);
+    background: var(--bg);
+  }
+  &__caption, &__title {
+    font-size: 1rem;
+    color: var(--ink-3);
+    margin-top: var(--space-2);
+    text-align: left;
+    line-height: 1.55;
+  }
+  &.is-clickable { cursor: pointer; }
+  &.is-clickable:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+}
+.block-mermaid__chart {
+  display: flex; justify-content: center; align-items: center;
+  min-height: 80px;
+  svg { max-width: 100%; height: auto; }
+}
+.block-mermaid__source {
+  background: var(--code-bg, #1f2329);
+  color: var(--ink, #e2e2e2);
+  padding: var(--space-2);
+  font-family: 'Roboto Mono', monospace;
+  font-size: 1rem;
+  border-radius: var(--radius-sm, 6px);
+  overflow-x: auto;
+  text-align: left;
+}
+:root[data-theme="dark"] {
+  .block-image, .block-video, .block-mermaid {
+    background: var(--bg-soft);
+    border-color: var(--line);
+  }
+  .block-image__caption, .block-video__caption, .block-mermaid__title { color: var(--ink-3); }
+}
+
+// ============================================================================
+// Code syntax highlighting tokens (mini highlighter — Prism/Shiki yerine)
+// ============================================================================
+.tok-kw  { color: #c678dd; font-weight: 500; }
+.tok-str { color: #98c379; }
+.tok-num { color: #d19a66; }
+.tok-cmt { color: #5c6370; font-style: italic; }
+
+// Light mode için tokens
+:root[data-theme="light"] {
+  .tok-kw  { color: #a626a4; }
+  .tok-str { color: #50a14f; }
+  .tok-num { color: #986801; }
+  .tok-cmt { color: #a0a1a7; font-style: italic; }
+}
+
+// ============================================================================
+// Detail panel — gündelik analoji + dürüst placeholder
+// ============================================================================
+.dp__analogy {
+  background: color-mix(in srgb, var(--enrich-info, #2e7d32) 8%, var(--bg));
+  border-left: 3px solid var(--enrich-info, #2e7d32);
+  border-radius: var(--radius-md);
+  padding: var(--space-3) var(--space-4) !important;
+
+  h4 { margin-top: 0 !important; color: var(--enrich-info, #2e7d32) !important; }
+  p { margin: 0; line-height: 1.65; color: var(--ink-2); }
+}
+
+.dp__placeholder {
+  background: color-mix(in srgb, var(--warn, #c47a17) 6%, var(--bg-soft));
+  border: 1px dashed color-mix(in srgb, var(--warn, #c47a17) 40%, transparent);
+  border-radius: var(--radius-md);
+  padding: var(--space-3) var(--space-4) !important;
+
+  &-row {
+    display: flex;
+    gap: var(--space-3);
+    align-items: flex-start;
+    i { font-size: 1.5rem; color: var(--warn, #c47a17); flex-shrink: 0; margin-top: 0.1rem; }
+    strong { display: block; color: var(--ink); margin-bottom: var(--space-1); font-weight: 500; }
+    p { margin: 0; line-height: 1.6; color: var(--ink-3); font-size: 1rem; }
+    code {
+      background: var(--bg);
+      padding: 0.1rem 0.35rem;
+      border-radius: var(--radius-sm, 4px);
+      font-family: 'Roboto Mono', monospace;
+      font-size: 1rem;
+    }
+  }
+}
+:root[data-theme="dark"] .dp__placeholder {
+  background: color-mix(in srgb, var(--warn, #f5c75a) 10%, var(--bg-soft));
+  border-color: color-mix(in srgb, var(--warn, #f5c75a) 40%, transparent);
+  i { color: var(--warn, #f5c75a); }
+  strong { color: var(--ink); }
+  p { color: var(--ink-3); }
+}
+
+// ============================================================================
+// Block error UI — registry/render fail için tutarlı yüzey
+// ============================================================================
+.block-error {
+  display: flex;
+  gap: var(--space-3);
+  align-items: flex-start;
+  padding: var(--space-3) var(--space-4);
+  margin: var(--space-3) 0;
+  background: var(--bg-soft);
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--warn, #c47a17);
+  border-radius: var(--radius-md);
+  font-size: 1rem;
+
+  i { font-size: 1.25rem; color: var(--warn, #c47a17); flex-shrink: 0; margin-top: 0.1rem; }
+  &__body { flex: 1; min-width: 0; }
+  &__msg { margin-top: var(--space-1); color: var(--ink-3); font-size: 1rem; line-height: 1.5; }
+  code {
+    background: var(--bg);
+    padding: 0.1rem 0.4rem;
+    border-radius: var(--radius-sm, 4px);
+    font-family: 'Roboto Mono', monospace;
+    font-size: 1rem;
+  }
+}
+:root[data-theme="dark"] .block-error {
+  background: var(--bg-soft);
+  border-color: var(--line);
+  i { color: var(--warn, #f5c75a); }
+  &__msg { color: var(--ink-3); }
+}
+
+// Reduced motion — animasyon hassasiyeti olan kullanıcılar için
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+// ============================================================================
+// R3 — ESTETİK CİLA TURU (token-safe · additive · geri alınabilir) · 2026-06
+// Yalnızca sunum katmanı: motion/focus token'ları, marka seçim rengi, ince
+// scrollbar, focus halo, native accent, mobil dokunma cilası.
+// JSON içerik / layout / mevcut komponentler DEĞİŞMEDİ. Tek blok → kolay revert.
+// ============================================================================
+:root {
+  // Motion — yeni stiller + tutarlılık için tek kaynak
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-standard: cubic-bezier(0.4, 0, 0.2, 1);
+  --dur-fast: 120ms;
+  --dur-base: 200ms;
+  // Focus — tek kaynak (mevcut a11y outline standardını besler)
+  --focus-ring: var(--enrich-detail);
+  --focus-halo: color-mix(in srgb, var(--enrich-detail) 22%, transparent);
+  // Scrollbar
+  --scrollbar-thumb: color-mix(in srgb, var(--ink-4) 60%, transparent);
+  --scrollbar-thumb-hover: color-mix(in srgb, var(--ink-3) 75%, transparent);
+  // Native form kontrolleri marka rengi (checkbox/radio/range/progress)
+  accent-color: var(--enrich-detail);
+}
+
+// Mobil: otomatik metin büyütmeyi engelle + dokunma parıltısını markaya çek
+html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+:where(a, button, [role="button"], [tabindex="0"], summary, .is-clickable) {
+  -webkit-tap-highlight-color: color-mix(in srgb, var(--enrich-detail) 14%, transparent);
+}
+
+// Marka seçim rengi — tema token'ına bağlı; dark modda otomatik uyarlanır
+::selection {
+  background: color-mix(in srgb, var(--enrich-detail) 25%, transparent);
+  color: var(--ink);
+}
+
+// İnce, gösterişsiz scrollbar — overflow yoksa görünmez, layout'u etkilemez
+@supports (scrollbar-width: thin) {
+  html { scrollbar-width: thin; scrollbar-color: var(--scrollbar-thumb) transparent; }
+}
+*::-webkit-scrollbar { width: 10px; height: 10px; }
+*::-webkit-scrollbar-track { background: transparent; }
+*::-webkit-scrollbar-thumb {
+  background: var(--scrollbar-thumb);
+  border-radius: var(--radius-pill, 999px);
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+*::-webkit-scrollbar-thumb:hover {
+  background: var(--scrollbar-thumb-hover);
+  background-clip: padding-box;
+}
+
+// Focus — KLAVYE focus'unda mevcut crisp outline KORUNUR (a11y standardı).
+// Ancak zaten seçili item'da (is-detail-active = sol accent bar göstergesi var)
+// fare tıklamasıyla TAM mor kutu çizmek gereksiz ve ağır görünüyor → o durumda
+// outline kaldırılır, seçim sol-bar ile gösterilir. Klavyeyle gezilen (henüz
+// seçilmemiş) item'larda outline aynen görünür.
+.is-clickable.is-detail-active:focus,
+.is-clickable.is-detail-active:focus-visible {
+  outline: none;
+}
+
+// FIX (R3): "card içinde card" — .cluster__header.is-clickable kendi border-radius
+// + negatif margin ile kartın İÇİNDE ayrı yüzen bir panel gibi görünüyordu.
+// Tek kart = .cluster; header onun içinde FLUSH içerik olmalı. Radius ve yatay
+// negatif margin sıfırlanır; açık state'teki header↔body ayıraç çizgisi korunur.
+.cluster__header.is-clickable {
+  border-radius: 0;
+  margin-left: 0;
+  margin-right: 0;
+}
+.cluster--collapsed .cluster__header.is-clickable {
+  margin-bottom: 0;
+  border-bottom: 0;
+}
+
+// ============================================================================
+// FIX (R3·B): SEÇİM GÖSTERGESİNİ SUSTUR — kullanıcı kararı.
+// Tıklanan/seçilen içerik öğelerinde beliren yüzen mor SOL-BAR (inset box-shadow)
+// ve KUTU (focus outline) tamamen kaldırılır. Seçili öğe yalnızca çok hafif bir
+// arka plan tintiyle belli olur. `is-clickable` tüm içerik bloklarına eklendiği
+// için tek kural hepsini (examples li, feature-list, list, kv, step, callout,
+// grid, layer-card, story, checklist, cluster header…) kapsar.
+// Tip/katman göstergesi olan border-left'lere DOKUNULMAZ (onlar seçim değil).
+// ============================================================================
+.is-clickable.is-detail-active,
+.is-detail-active {
+  box-shadow: none !important;   // yüzen sol-bar + inset gölge → yok
+  outline: none !important;      // tıklama kaynaklı mor kutu → yok
+  background: color-mix(in srgb, var(--enrich-detail) 6%, var(--bg-soft)) !important;
+}
+:root[data-theme="dark"] .is-clickable.is-detail-active,
+:root[data-theme="dark"] .is-detail-active {
+  background: color-mix(in srgb, var(--enrich-detail) 16%, var(--bg-soft)) !important;
+}
+// Seçili öğede kalıcı "→" oku da gizlenir (hover ipucu, seçilmemiş öğelerde durur)
+.is-detail-active::after { opacity: 0 !important; }
+
+// ============================================================================
+// NEUMORPHISM — SOFT UI override (chips, tags, badges, buttons)
+// Sert border'lar kaldırılır; çift yumuşak gölge ile yüzey hissi verilir.
+// En sonda olduğu için tüm önceki kuralları override eder.
+// ============================================================================
+
+// Pasif chip ailesi (tag + gran + state + diff + read + updated)
+.tag,
+.gran-chip,
+.state-chip,
+.diff-chip,
+.read-chip,
+.updated-chip,
+.cluster__badge {
+  background: var(--neu-surface) !important;
+  border: 0 !important;
+  border-radius: var(--neu-radius-pill) !important;
+  // Yumuşak inset — chip yüzeye gömük gibi (recessed pill)
+  box-shadow:
+    inset 2px 2px 4px var(--neu-shadow-dark),
+    inset -2px -2px 4px var(--neu-shadow-light) !important;
+  padding: 0.25rem 0.7rem !important;
+}
+
+// Aktif state'ler (selected/active filter chip vs.) — recessed (basılı buton)
+.chip--active,
+.toc__link--active,
+.is-detail-active {
+  box-shadow:
+    inset 3px 3px 6px var(--neu-shadow-dark),
+    inset -3px -3px 6px var(--neu-shadow-light) !important;
+  background: var(--neu-surface) !important;
+}
+
+// Filter bar — recessed kapsayıcı
+.filter-bar {
+  background: var(--neu-surface) !important;
+  border: 0 !important;
+  border-radius: var(--neu-radius) !important;
+  box-shadow:
+    inset 4px 4px 10px var(--neu-shadow-dark),
+    inset -4px -4px 10px var(--neu-shadow-light) !important;
+}
+
+// Filter chip (pill button)
+.chip {
+  background: var(--neu-surface) !important;
+  border: 0 !important;
+  border-radius: var(--neu-radius-pill) !important;
+  box-shadow:
+    -3px -3px 6px var(--neu-shadow-light),
+    3px 3px 6px var(--neu-shadow-dark) !important;
+  &:hover:not(.chip--active) {
+    box-shadow:
+      inset 2px 2px 4px var(--neu-shadow-dark),
+      inset -2px -2px 4px var(--neu-shadow-light) !important;
+  }
+}
+
+// Appbar action butonları
+.appbar__action {
+  background: var(--neu-surface) !important;
+  border: 0 !important;
+  border-radius: 50% !important;
+  box-shadow:
+    -3px -3px 6px var(--neu-shadow-light),
+    3px 3px 6px var(--neu-shadow-dark) !important;
+  transition: box-shadow 200ms ease !important;
+  &:hover {
+    box-shadow:
+      inset 2px 2px 4px var(--neu-shadow-dark),
+      inset -2px -2px 4px var(--neu-shadow-light) !important;
+  }
+}
+
+// Search box yuvarlatılmış soft kapsayıcı
+.search-box__inner {
+  background: var(--neu-surface) !important;
+  border: 0 !important;
+  border-radius: var(--neu-radius-pill) !important;
+  box-shadow:
+    inset 3px 3px 6px var(--neu-shadow-dark),
+    inset -3px -3px 6px var(--neu-shadow-light) !important;
+}
+
+// Hero kutusu — kabartmalı yüzey (sayfada yüzer)
+.hero {
+  background: var(--neu-surface);
+  border-radius: var(--neu-radius);
+  box-shadow:
+    calc(-1 * var(--neu-distance-sm)) calc(-1 * var(--neu-distance-sm)) var(--neu-blur-sm) var(--neu-shadow-light),
+    var(--neu-distance-sm) var(--neu-distance-sm) var(--neu-blur-sm) var(--neu-shadow-dark);
+  padding: var(--space-4) var(--space-5) !important;
+  border: 0 !important;
+}
+
+// Sidebar — recessed (çukur) yüzey, sayfanın gömük tarafı
+.sidebar {
+  background: var(--neu-bg) !important;
+  border-right: 0 !important;
+  box-shadow:
+    inset -6px 0 14px var(--neu-shadow-dark) !important;
+}
+
+// TOC linkleri pasifte düz, aktifte recessed pill
+.toc a {
+  border-radius: var(--neu-radius-sm) !important;
+  &:hover {
+    background: var(--neu-surface) !important;
+    box-shadow:
+      inset 2px 2px 4px var(--neu-shadow-dark),
+      inset -2px -2px 4px var(--neu-shadow-light) !important;
+  }
+}
+
+// Detail panel — sağ çukur (recessed)
+.detail-panel {
+  background: var(--neu-bg) !important;
+  border-left: 0 !important;
+  box-shadow:
+    inset 6px 0 14px var(--neu-shadow-dark) !important;
+}
+.dp__section {
+  background: var(--neu-surface) !important;
+  border: 0 !important;
+  border-radius: var(--neu-radius-sm) !important;
+  box-shadow:
+    -4px -4px 8px var(--neu-shadow-light),
+    4px 4px 8px var(--neu-shadow-dark) !important;
+  padding: var(--space-3) var(--space-4) !important;
+  margin-bottom: var(--space-3) !important;
+}
+
+// Popover yumuşak yüzey
+.pop {
+  background: var(--neu-surface) !important;
+  border: 0 !important;
+  border-radius: var(--neu-radius) !important;
+  box-shadow:
+    -8px -8px 18px var(--neu-shadow-light),
+    8px 8px 18px var(--neu-shadow-dark) !important;
+}
+
+// Bookmark/share/edit ikonu butonları (cluster__bookmark, sidebar__close)
+.cluster__bookmark,
+.sidebar__close {
+  background: var(--neu-surface) !important;
+  border: 0 !important;
+  border-radius: 50% !important;
+  box-shadow:
+    -3px -3px 6px var(--neu-shadow-light),
+    3px 3px 6px var(--neu-shadow-dark) !important;
+  &:hover {
+    box-shadow:
+      inset 2px 2px 4px var(--neu-shadow-dark),
+      inset -2px -2px 4px var(--neu-shadow-light) !important;
+  }
+}
+
+// Appbar (üst bar) sade tutalım — minimal shadow, neumorphic alt çizgi
+.appbar {
+  background: var(--neu-bg) !important;
+  border-bottom: 0 !important;
+  box-shadow: 0 6px 14px var(--neu-shadow-dark) !important;
+}
+
+// =============================================================================
+// v23 UI OVERHAUL — Neumorphism kaldırıldı, modern düz UI, WCAG 2.2 AAA odaklı
+// - Spacing 8px grid + desktop'ta daha cömert padding
+// - Tek tip 2-katmanlı shadow (subtle + elevation)
+// - Buton sistemi: sm 40px / md 48px / lg 56px (AAA tap target ≥ 44px)
+// - Focus ring 3px solid + 2px offset, 3:1 kontrast (AAA)
+// - Border-radius tutarlı (8/12/16/20)
+// - Hierarchy: surface → border-bottom 1px değil, soft elevation
+// =============================================================================
+:root {
+  // Spacing — desktop'ta daha cömert
+  --space-fine: 0.25rem;      // 4
+  --space-tight: 0.5rem;      // 8
+  --space-snug: 0.75rem;      // 12
+  --space-cozy: 1rem;         // 16
+  --space-comfy: 1.5rem;      // 24
+  --space-loose: 2rem;        // 32
+  --space-airy: 2.5rem;       // 40
+  --space-spacious: 3rem;     // 48
+  --space-vast: 4rem;         // 64
+
+  // Tutarlı radius scale
+  --r-xs: 6px;
+  --r-sm: 8px;
+  --r-md: 12px;
+  --r-lg: 16px;
+  --r-xl: 20px;
+  --r-pill: 999px;
+
+  // Modern shadow scale (2-tier: subtle baseline + elevation hover)
+  --shadow-1: 0 1px 2px rgba(15, 23, 42, 0.04), 0 1px 3px rgba(15, 23, 42, 0.06);
+  --shadow-2: 0 2px 4px rgba(15, 23, 42, 0.04), 0 4px 12px rgba(15, 23, 42, 0.08);
+  --shadow-3: 0 4px 8px rgba(15, 23, 42, 0.06), 0 12px 32px rgba(15, 23, 42, 0.12);
+  --shadow-focus: 0 0 0 3px rgba(37, 99, 235, 0.4);
+
+  // WCAG AAA ink palette — kontrast 7:1+ (light bg)
+  --aaa-ink-1: #0f172a;       // gövde (slate-900) — 16.0:1
+  --aaa-ink-2: #1e293b;       // alt başlık (slate-800) — 13.6:1
+  --aaa-ink-3: #334155;       // meta (slate-700) — 9.7:1 → AAA
+  --aaa-ink-4: #475569;       // disabled (slate-600) — 7.3:1 → AAA
+  --aaa-link: #1d4ed8;        // mavi link — 7.1:1
+  --aaa-focus: #2563eb;       // odak çerçevesi
+
+  // Button system — 4 boyut
+  --btn-h-sm: 40px;
+  --btn-h-md: 48px;       // varsayılan (AAA ≥ 44px karşılanır)
+  --btn-h-lg: 56px;
+  --btn-pad-x: 1rem;
+  --btn-pad-x-lg: 1.5rem;
+
+  // Card system — neumorphism iptal, modern elevation
+  --card-bg-flat: #ffffff;
+  --card-border-flat: rgba(15, 23, 42, 0.06);
+
+  // Neumorphism shadow değişkenlerini ÖLDÜR (mevcut kodun bozulmaması için
+  // sıfırlamak yerine modern shadow ile değiştir):
+  --neu-shadow-light: transparent;
+  --neu-shadow-dark: rgba(15, 23, 42, 0.08);
+  --neu-distance: 0px;
+  --neu-blur: 12px;
+  --neu-distance-sm: 0px;
+  --neu-bg: #f8fafc;          // sayfa zemini soğuk-gri
+  --neu-surface: #ffffff;     // kartlar beyaz
+}
+
+// Sayfa zemini ve genel typography
+html {
+  // AAA gereği: 16px tabanlı ölçek, line-height ≥ 1.5
+  font-size: 16px;
+}
+body {
+  background: var(--neu-bg);
+  color: var(--aaa-ink-1);
+  line-height: 1.6;
+  font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+// Main content — desktop'ta cömert padding
+.main {
+  @include md-up {
+    padding: var(--space-loose) var(--space-airy) var(--space-vast) !important;
+  }
+  @include lg-up {
+    padding: var(--space-airy) var(--space-spacious) var(--space-vast) !important;
+  }
+  @include xl-up {
+    padding: var(--space-airy) var(--space-vast) var(--space-vast) !important;
+  }
+}
+
+// Cluster kartları — modern düz, soft shadow, NEUMORPHISM YOK
+.cluster {
+  background: var(--card-bg-flat) !important;
+  border: 1px solid var(--card-border-flat) !important;
+  border-radius: var(--r-lg) !important;
+  box-shadow: var(--shadow-1) !important;
+  margin-bottom: var(--space-comfy) !important;
+  transition: box-shadow 200ms ease, transform 200ms ease !important;
+
+  &:hover {
+    box-shadow: var(--shadow-2) !important;
+  }
+
+  &__header {
+    padding: var(--space-comfy) var(--space-comfy) !important;
+    gap: var(--space-snug) !important;
+    @include md-up {
+      padding: var(--space-comfy) var(--space-loose) !important;
+    }
+  }
+
+  &__body {
+    padding: 0 var(--space-comfy) var(--space-comfy) !important;
+    @include md-up {
+      padding: 0 var(--space-loose) var(--space-loose) !important;
+    }
+  }
+
+  &--highlight {
+    box-shadow: 0 0 0 3px var(--aaa-focus), var(--shadow-2) !important;
+  }
+}
+
+// Buton sistemi — tutarlı, AAA tap target
+button, .btn, .chip, .appbar__action, .toc__group-header, .enrich-btn,
+.sidebar__close, .cluster__toggle, .dp__close, .bookmark-btn {
+  min-height: var(--btn-h-md);
+  border-radius: var(--r-sm);
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  transition: background 160ms ease, color 160ms ease, box-shadow 160ms ease,
+    transform 80ms ease;
+
+  // Klavye odağı — AAA (3px, 3:1 kontrast)
+  &:focus-visible {
+    outline: 3px solid var(--aaa-focus) !important;
+    outline-offset: 2px !important;
+    box-shadow: var(--shadow-focus) !important;
+  }
+
+  &:active:not(:disabled) {
+    transform: translateY(1px);
+  }
+
+  &:disabled, &[aria-disabled="true"] {
+    opacity: 0.55;
+    cursor: not-allowed;
+  }
+}
+
+// Küçük çip/badge ler — yine min 40px (AAA edge'i):
+.chip, .badge, .tag {
+  min-height: var(--btn-h-sm);
+  padding: var(--space-tight) var(--space-snug);
+  border-radius: var(--r-pill);
+}
+
+// Toggle/icon-only butonlar — min 44×44px
+button[data-cluster-toggle],
+.cluster__toggle,
+.sidebar__close,
+.dp__close,
+.bookmark-btn,
+.enrich-btn {
+  min-width: var(--btn-h-md);
+  min-height: var(--btn-h-md);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+// Form input'ları — yine 48px, AAA dokunma
+input[type="text"], input[type="search"], input[type="email"],
+input[type="password"], input[type="number"], textarea, select {
+  min-height: var(--btn-h-md);
+  border-radius: var(--r-sm);
+  padding: var(--space-snug) var(--space-cozy);
+  border: 1.5px solid var(--card-border-flat);
+  background: var(--card-bg-flat);
+  font-size: 1rem;
+  line-height: 1.5;
+
+  &:focus-visible {
+    outline: 3px solid var(--aaa-focus);
+    outline-offset: 1px;
+    border-color: var(--aaa-focus);
+  }
+}
+
+// Sidebar — modern, düz, sade
+.sidebar {
+  background: var(--card-bg-flat) !important;
+  border-right: 1px solid var(--card-border-flat) !important;
+  box-shadow: none !important;
+
+  &__brand {
+    padding: var(--space-snug) var(--space-cozy);
+  }
+}
+
+// Sidebar grup başlıkları — net hiyerarşi, AAA kontrast
+.toc__group-header {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--aaa-ink-3) !important;
+  padding: var(--space-cozy) var(--space-snug);
+  background: transparent;
+  border-radius: var(--r-sm);
+
+  &:hover {
+    background: rgba(15, 23, 42, 0.04);
+    color: var(--aaa-ink-1) !important;
+  }
+}
+
+// Sidebar item link'leri — AAA contrast, hover/active belirgin
+.toc__link, .toc__item > a {
+  min-height: var(--btn-h-md);
+  display: flex;
+  align-items: center;
+  padding: var(--space-tight) var(--space-snug);
+  color: var(--aaa-ink-2) !important;
+  border-radius: var(--r-sm);
+  font-size: 1rem;
+  line-height: 1.4;
+  text-decoration: none;
+
+  &:hover {
+    background: rgba(15, 23, 42, 0.04);
+    color: var(--aaa-ink-1) !important;
+  }
+
+  &--active, &.toc__link--active {
+    background: rgba(37, 99, 235, 0.08) !important;
+    color: var(--aaa-link) !important;
+    font-weight: 500;
+    border-left: 3px solid var(--aaa-link);
+    padding-left: calc(var(--space-snug) - 3px);
+  }
+}
+
+// Detail panel — modern düz
+.detail-panel {
+  background: var(--card-bg-flat) !important;
+  border-left: 1px solid var(--card-border-flat) !important;
+  box-shadow: -8px 0 24px rgba(15, 23, 42, 0.06) !important;
+}
+
+// Appbar — sade, modern
+.appbar {
+  background: var(--card-bg-flat) !important;
+  border-bottom: 1px solid var(--card-border-flat) !important;
+  box-shadow: var(--shadow-1) !important;
+}
+
+// Callout — yumuşak, net renk hiyerarşisi (AAA)
+.callout {
+  border-radius: var(--r-md) !important;
+  padding: var(--space-cozy) var(--space-comfy) !important;
+  border: 1.5px solid currentColor !important;
+  margin: var(--space-cozy) 0 !important;
+
+  &--tip       { background: #ecfdf5; color: #065f46; border-color: #34d399; }
+  &--info      { background: #eff6ff; color: #1e3a8a; border-color: #60a5fa; }
+  &--warning   { background: #fffbeb; color: #78350f; border-color: #f59e0b; }
+  &--critical  { background: #fef2f2; color: #7f1d1d; border-color: #ef4444; }
+  &--tr        { background: #fef2f2; color: #7f1d1d; border-color: #dc2626; }
+}
+
+// Tablolar — modern, sade, AAA okunabilirlik
+table {
+  border-collapse: separate;
+  border-spacing: 0;
+  width: 100%;
+  margin: var(--space-cozy) 0;
+  border: 1px solid var(--card-border-flat);
+  border-radius: var(--r-md);
+  overflow: hidden;
+  font-size: 1rem;
+
+  th, td {
+    padding: var(--space-snug) var(--space-cozy);
+    border-bottom: 1px solid var(--card-border-flat);
+    line-height: 1.5;
+    text-align: left;
+  }
+
+  th {
+    background: #f8fafc;
+    color: var(--aaa-ink-1);
+    font-weight: 600;
+  }
+
+  tbody tr:last-child td {
+    border-bottom: none;
+  }
+
+  tbody tr:hover td {
+    background: rgba(15, 23, 42, 0.02);
+  }
+}
+
+// Code / pre — modern
+code {
+  background: #f1f5f9;
+  color: #0f172a;
+  padding: 2px 6px;
+  border-radius: var(--r-xs);
+  font-size: 0.9375em;
+}
+pre {
+  background: #0f172a;
+  color: #f1f5f9;
+  padding: var(--space-cozy) var(--space-comfy);
+  border-radius: var(--r-md);
+  overflow-x: auto;
+  line-height: 1.6;
+
+  code { background: transparent; color: inherit; padding: 0; }
+}
+
+// Headings — net hiyerarşi
+h1, h2, h3, h4, h5, h6 {
+  color: var(--aaa-ink-1);
+  font-weight: 600;
+  line-height: 1.3;
+  letter-spacing: -0.02em;
+}
+h1 { font-size: 2rem; margin-block: var(--space-loose) var(--space-comfy); }
+h2 { font-size: 1.625rem; margin-block: var(--space-comfy) var(--space-cozy); }
+h3 { font-size: 1.375rem; margin-block: var(--space-comfy) var(--space-cozy); }
+h4 { font-size: 1.1875rem; margin-block: var(--space-cozy) var(--space-snug); }
+
+// Paragraflar — AAA: paragraph spacing ≥ 2× font size
+p {
+  color: var(--aaa-ink-2);
+  margin-block: 0 var(--space-comfy);
+  line-height: 1.65;
+}
+
+// Link — AAA contrast 7:1
+a {
+  color: var(--aaa-link);
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+  text-decoration-thickness: 1.5px;
+
+  &:hover {
+    color: #1e3a8a;
+    text-decoration-thickness: 2.5px;
+  }
+}
+
+// Reduced motion respect (AAA prefer)
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+// Scrollbar — modern (light & dark)
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(15, 23, 42, 0.2) transparent;
+}
+*::-webkit-scrollbar { width: 10px; height: 10px; }
+*::-webkit-scrollbar-track { background: transparent; }
+*::-webkit-scrollbar-thumb {
+  background: rgba(15, 23, 42, 0.18);
+  border-radius: var(--r-pill);
+}
+*::-webkit-scrollbar-thumb:hover { background: rgba(15, 23, 42, 0.32); }
+
+// Dark mode override
+@media (prefers-color-scheme: dark) {
+  :root {
+    --neu-bg: #0f172a;
+    --neu-surface: #1e293b;
+    --card-bg-flat: #1e293b;
+    --card-border-flat: rgba(255, 255, 255, 0.08);
+    --aaa-ink-1: #f1f5f9;
+    --aaa-ink-2: #e2e8f0;
+    --aaa-ink-3: #cbd5e1;
+    --aaa-ink-4: #94a3b8;
+    --aaa-link: #60a5fa;
+    --aaa-focus: #93c5fd;
+  }
+  body { background: var(--neu-bg); color: var(--aaa-ink-1); }
+  code { background: rgba(255,255,255,0.08); color: #e2e8f0; }
+  pre { background: #020617; }
+  table th { background: rgba(255,255,255,0.04); }
+  .toc__group-header:hover, .toc__link:hover { background: rgba(255,255,255,0.06); }
+}

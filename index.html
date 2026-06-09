@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+<meta name="theme-color" content="#0f172a" media="(prefers-color-scheme: dark)" />
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
+<title>Framework Master — JSON-driven DDD Modüler Monolith</title>
+<meta name="description" content="JSON-driven, AI-first eğitim ve mimari referans rehberi. DDD modüler monolith framework için interaktif dokümantasyon." />
+<meta property="og:title" content="Framework Master — JSON-driven DDD Modüler Monolith" />
+<meta property="og:description" content="JSON-driven, AI-first eğitim ve mimari referans rehberi." />
+<meta property="og:type" content="website" />
+<meta name="twitter:card" content="summary" />
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%230f172a'/%3E%3Cpath d='M8 10h16M8 16h16M8 22h10' stroke='%2360a5fa' stroke-width='2.5' stroke-linecap='round'/%3E%3C/svg%3E" />
+<link rel="manifest" href="./manifest.webmanifest" />
+<link rel="canonical" href="https://karacaismail.github.io/ddd_moduler_monolith/" />
+<!-- CSP — Phosphor icons (unpkg font), Google Fonts, Sentry RUM (unsafe-eval) izinli -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'self' data: blob:; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net https://browser.sentry-cdn.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://unpkg.com; font-src 'self' data: https://fonts.gstatic.com https://unpkg.com; img-src 'self' data: blob: https:; connect-src 'self' https:; frame-ancestors 'none'; base-uri 'self';" />
+<script>
+  // Service Worker kaydı — yalnızca prod build'inde
+  if ('serviceWorker' in navigator && location.protocol !== 'file:') {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('./sw.js').then((reg) => {
+        // Yeni sürüm bulununca toast göster
+        reg.addEventListener('updatefound', () => {
+          const newSw = reg.installing;
+          if (!newSw) return;
+          newSw.addEventListener('statechange', () => {
+            if (newSw.state === 'installed' && navigator.serviceWorker.controller) {
+              // Tarayıcıda eski sürüm hâlâ aktif, yeni hazır — bildirim göster
+              window.dispatchEvent(new CustomEvent('fw:sw-update-ready', { detail: newSw }));
+            }
+          });
+        });
+      }).catch((err) => console.warn('[sw] kayıt başarısız:', err));
+
+      // controllerchange → sayfayı yenile
+      let refreshing = false;
+      navigator.serviceWorker.addEventListener('controllerchange', () => {
+        if (refreshing) return;
+        refreshing = true;
+        window.location.reload();
+      });
+    });
+  }
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Roboto:wght@300;400;500;700&family=Roboto+Mono:wght@400;500&display=swap&subset=latin,latin-ext" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/bold/style.css">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/duotone/style.css">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css">
+<script>
+  // GH Pages 404 fallback — yolu hash'e dönüştür (SPA için)
+  // Eğer URL'de path varsa ve bilinen route değilse, hash'e çevir
+  (function() {
+    var l = window.location;
+    var base = l.pathname.split('/').slice(0, 2).join('/') + '/';
+    var rest = l.pathname.replace(base, '');
+    if (rest && rest !== 'index.html' && !rest.startsWith('content/') && !rest.startsWith('assets/')) {
+      // 404'ten geldiyse — rest'i hash yap
+      l.replace(base + (rest.includes('#') ? '' : '#' + rest.replace(/\/$/, '')));
+    }
+  })();
+</script>
+</head>
+<body>
+<a class="skip-to-content" href="#content">İçeriğe atla</a>
+<header id="appbar" class="appbar">
+  <button id="mobile-menu-toggle" class="appbar__menu" aria-label="Menüyü aç/kapat">
+    <i class="ph ph-list"></i>
+  </button>
+  <a class="appbar__brand" href="#overview">
+    <i class="ph-duotone ph-stack"></i>
+    <span>Framework Master</span>
+  </a>
+  <div id="search-box" class="appbar__search search-box"></div>
+  <div class="appbar__actions">
+    <button id="bookmarks-toggle" class="appbar__action" aria-label="Yer imlerim" title="Yer imlerim">
+      <i class="ph ph-star"></i>
+      <span id="bookmarks-count" class="appbar__badge" hidden>0</span>
+    </button>
+    <button id="share-toggle" class="appbar__action" aria-label="Bağlantıyı paylaş" title="Bu sayfanın bağlantısını kopyala">
+      <i class="ph ph-share-network"></i>
+    </button>
+    <a id="edit-on-github" class="appbar__action" href="https://github.com/karacaismail/ddd_moduler_monolith/tree/main/framework-renderer/content" target="_blank" rel="noopener" aria-label="GitHub'da düzenle" title="Bu cluster'ı GitHub'da düzenle">
+      <i class="ph ph-pencil-simple"></i>
+    </a>
+    <button id="dark-toggle" class="appbar__action" aria-label="Karanlık mod">
+      <i class="ph ph-moon"></i>
+    </button>
+    <a class="appbar__action" href="https://github.com/karacaismail/ddd_moduler_monolith" target="_blank" rel="noopener" aria-label="GitHub repo">
+      <i class="ph ph-github-logo"></i>
+    </a>
+  </div>
+</header>
+<div id="app">
+  <aside id="sidebar" class="sidebar">
+    <button id="sidebar-close" class="sidebar__close" aria-label="Menüyü kapat">
+      <i class="ph ph-x"></i>
+    </button>
+    <nav id="toc" class="toc"></nav>
+    <aside class="sidebar__gran-legend" aria-label="Kilometre taşları">
+      <div class="sidebar__gran-legend__title">Tane büyüklüğü · 1 adet için iş yükü (SP)</div>
+      <div class="sidebar__gran-legend__row" title="1 modül ~89 SP karmaşıklık · projede ~15 adet"><i class="ph ph-mountains"></i> Kaya <span class="sidebar__gran-legend__sp">~89 SP</span></div>
+      <div class="sidebar__gran-legend__row" title="1 kapsam ~34 SP · 1 kaya = 15-20 büyük taş"><i class="ph ph-cube"></i> Büyük taş <span class="sidebar__gran-legend__sp">~34 SP</span></div>
+      <div class="sidebar__gran-legend__row" title="1 sayfa ~13 SP · 1 büyük taş = 5-10 orta taş"><i class="ph ph-square"></i> Orta taş <span class="sidebar__gran-legend__sp">~13 SP</span></div>
+      <div class="sidebar__gran-legend__row" title="1 section ~5 SP · 1 orta taş = 3-6 küçük taş"><i class="ph ph-squares-four"></i> Küçük taş <span class="sidebar__gran-legend__sp">~5 SP</span></div>
+      <div class="sidebar__gran-legend__row" title="1 field ~2 SP · 1 küçük taş = 5-30 kum"><i class="ph ph-dots-nine"></i> Kum tanesi <span class="sidebar__gran-legend__sp">~2 SP</span></div>
+      <div class="sidebar__gran-legend__row" title="1 validator ~1 SP · 1 kum = 1-3 toz"><i class="ph ph-dot-outline"></i> Toz tanesi <span class="sidebar__gran-legend__sp">~1 SP</span></div>
+      <div class="sidebar__gran-legend__row" title="1 primitive ~1 SP · framework'te ~80 atom sabit"><i class="ph ph-atom"></i> Atom <span class="sidebar__gran-legend__sp">~1 SP</span></div>
+    </aside>
+  </aside>
+
+  <main id="main" class="main">
+    <div id="hero" class="hero"></div>
+    <div id="filter-bar" class="filter-bar"></div>
+    <div id="content" class="content">
+      <div class="loading">
+        <i class="ph-bold ph-circle-notch ph-spin"></i>
+        <span>İçerik yükleniyor…</span>
+      </div>
+    </div>
+    <footer class="appfooter">
+      <div class="appfooter__col">
+        <strong>Framework Master</strong>
+        <div>JSON-driven, AI-first, modüler monolith</div>
+      </div>
+      <div class="appfooter__col">
+        <strong>Kısayollar</strong>
+        <div><kbd>/</kbd> arama · <kbd>Esc</kbd> paneli kapat</div>
+      </div>
+      <div class="appfooter__col">
+        <strong>Lisans</strong>
+        <div>LGPL-3.0</div>
+      </div>
+    </footer>
+  </main>
+
+  <aside id="detail-panel" class="detail-panel" aria-label="Detay paneli">
+    <div class="detail-panel__inner">
+      <div class="detail-panel__placeholder">
+        <i class="ph-duotone ph-cursor-click"></i>
+        <div class="detail-panel__placeholder-title">Bir karta tıkla</div>
+        <p>Soldaki herhangi bir konu veya alana tıklayınca; <strong>detaylı açıklama</strong>, <strong>terim sözlüğü</strong> ve <strong>gerçek dünya örnekleri</strong> burada görünür.</p>
+      </div>
+    </div>
+  </aside>
+</div>
+
+<script type="module" src="/src/main.ts"></script>
+</body>
+</html>

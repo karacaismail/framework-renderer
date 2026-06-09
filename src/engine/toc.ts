@@ -51,6 +51,7 @@ export function buildToc(manifest: Manifest, loadedClusters: Cluster[]): TocGrou
  * localStorage artık sadece "son açık grup" bilgisini tutar — multi-state YOK.
  */
 const STORAGE_OPEN_GROUP = 'fw.toc.openGroup';
+const STORAGE_PROGRESS = 'fw.toc.progress'; // JSON object {clusterId: true}
 
 function loadOpenGroup(): string | null {
   return localStorage.getItem(STORAGE_OPEN_GROUP);
@@ -59,6 +60,26 @@ function loadOpenGroup(): string | null {
 function saveOpenGroup(groupId: string | null): void {
   if (groupId) localStorage.setItem(STORAGE_OPEN_GROUP, groupId);
   else localStorage.removeItem(STORAGE_OPEN_GROUP);
+}
+
+/** Tüm progress map'i bir kez oku — performans için cache'le. */
+function readProgressMap(): Record<string, boolean> {
+  try {
+    return JSON.parse(localStorage.getItem(STORAGE_PROGRESS) ?? '{}');
+  } catch {
+    return {};
+  }
+}
+
+function loadProgress(clusterId: string): boolean {
+  return readProgressMap()[clusterId] === true;
+}
+
+function saveProgress(clusterId: string, done: boolean): void {
+  const map = readProgressMap();
+  if (done) map[clusterId] = true;
+  else delete map[clusterId];
+  localStorage.setItem(STORAGE_PROGRESS, JSON.stringify(map));
 }
 
 /**
@@ -192,6 +213,26 @@ export function renderTocElement(toc: TocGroup[], activeClusterId?: string): HTM
     for (const c of group.clusters) {
       const li = document.createElement('li');
       li.className = `toc__item${c.layer ? ` toc__item--${c.layer}` : ''}`;
+
+      // Progress checkbox — kullanıcı "okudum/tamamladım" işareti.
+      // localStorage'da `fw.progress.<clusterId>` = 'done' saklanır.
+      const isDone = loadProgress(c.id);
+      if (isDone) li.classList.add('toc__item--done');
+
+      const check = document.createElement('input');
+      check.type = 'checkbox';
+      check.className = 'toc__checkbox';
+      check.checked = isDone;
+      check.setAttribute('aria-label', `${c.title} — okundu olarak işaretle`);
+      check.setAttribute('data-progress-for', c.id);
+      check.addEventListener('click', (e) => e.stopPropagation());
+      check.addEventListener('change', () => {
+        const done = check.checked;
+        saveProgress(c.id, done);
+        li.classList.toggle('toc__item--done', done);
+      });
+      li.appendChild(check);
+
       const a = document.createElement('a');
       a.href = `#${c.id}`;
       a.textContent = c.title;
@@ -199,7 +240,6 @@ export function renderTocElement(toc: TocGroup[], activeClusterId?: string): HTM
       a.setAttribute('data-group-id', group.id);
       if (c.id === activeClusterId) a.classList.add('toc__link--active');
       // Tıklamada parent accordion'u kilitle: scrollSpy başka grubu açmasın.
-      // 1) Mevcut grubu zorla aç. 2) data-lock-until ile ~1200ms scroll-spy'ı baskıla.
       a.addEventListener('click', () => {
         openOnlyGroup(nav, group.id);
         nav.dataset.lockGroupId = group.id;

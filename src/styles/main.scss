@@ -6291,3 +6291,70 @@ a {
   table th { background: rgba(255,255,255,0.04); }
   .toc__group-header:hover, .toc__link:hover { background: rgba(255,255,255,0.06); }
 }
+
+// =============================================================================
+// v30: TOC ITEM PROGRESS — checkbox + strike-through (öğrenci ilerlemesi)
+// localStorage'da fw.toc.progress JSON map; her cluster için "okundu" işareti
+// =============================================================================
+.toc__item {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-tight);
+  position: relative;
+
+  // Checkbox stili — modern, custom
+  .toc__checkbox {
+    flex: 0 0 auto;
+    width: 18px;
+    height: 18px;
+    margin: 14px 0 0 0; // line-height ile hizala
+    accent-color: var(--aaa-link, #1d4ed8);
+    cursor: pointer;
+
+    &:focus-visible {
+      outline: 3px solid var(--aaa-focus, #2563eb);
+      outline-offset: 2px;
+    }
+
+    &:hover {
+      transform: scale(1.1);
+      transition: transform 100ms ease;
+    }
+  }
+
+  // Link — checkbox ile birlikte flex-1
+  > a {
+    flex: 1 1 auto;
+    transition: opacity 200ms ease, text-decoration-color 200ms ease;
+  }
+
+  // İşaretli (done) — strike + soluk
+  &--done {
+    > a {
+      text-decoration: line-through;
+      text-decoration-thickness: 1.5px;
+      text-decoration-color: var(--aaa-ink-4, #475569);
+      opacity: 0.55;
+
+      &:hover {
+        opacity: 0.85;
+      }
+
+      // Active item bile checkbox'lıysa belirgin kalsın
+      &.toc__link--active {
+        opacity: 0.75;
+        text-decoration-color: var(--aaa-link, #1d4ed8);
+      }
+    }
+  }
+}
+
+// Dark mode — checkbox tonu
+@media (prefers-color-scheme: dark) {
+  .toc__item {
+    .toc__checkbox { accent-color: var(--aaa-link); }
+    &--done > a {
+      text-decoration-color: var(--aaa-ink-4);
+    }
+  }
+}

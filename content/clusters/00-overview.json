@@ -374,6 +374,12 @@
       "variant": "info",
       "label": "Resolver operasyonu + global kimlik — gizli %50",
       "body": "6-eksen orthogonal resolver **kurmak %50**; geriye kalan %50:\n\n- **Operasyonel sertleştirme** (`cc-resolver-ops`): backfill + cache + failure mode + 4-göz config + decision-trace\n- **Global kimlik modelleri** (`cc-identity-models`): isim/telefon/adres/vergi-no ABD-merkezli varsayım kırma\n\nİkisi olmadan resolver 'çalışıyor görünür' ama prod incident garanti."
+    },
+    {
+      "type": "callout",
+      "variant": "info",
+      "label": "DocType pozisyon — DDD purist eleştirisine cevap",
+      "body": "**Eleştiri:** *'DocType DDD ihlali, anemic domain'.* **Pozisyon:** Klasik DDD'de doğru ama bu proje **meta-framework**. DocType ≠ tek tablo + type switching. Runtime'da klasik DDD'nin 3 yaklaşımının **metadata karşılıkları**: tablo-per-tip generation, policy plugin Strategy, value object enum. Detay: `edu-u25`, `k-schema`."
     }
   ],
   "related": [

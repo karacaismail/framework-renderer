@@ -326,6 +326,13 @@
       "title": "Uluslararasılaştırma — 6 Eksen"
     },
     {
+      "id": "edu-u25",
+      "file": "clusters/109-edu-u25-doctype-vs-ddd.json",
+      "cluster": "edu",
+      "order": 28,
+      "title": "DocType vs Klasik DDD"
+    },
+    {
       "file": "clusters/00-overview.json",
       "id": "overview",
       "title": "Yönetici özeti",
@@ -703,6 +710,13 @@
       "cluster": "core-operations",
       "order": 12,
       "title": "Classifieds — İlan Platformu"
+    },
+    {
+      "id": "s-payment-methods",
+      "file": "clusters/170-s-payment-methods.json",
+      "cluster": "core-operations",
+      "order": 13,
+      "title": "Yerel Ödeme Yöntemleri"
     },
     {
       "id": "s-revenue-recognition",
@@ -1259,6 +1273,20 @@
       "cluster": "crosscut",
       "order": 15,
       "title": "Resolver Operasyonel Sertleştirme"
+    },
+    {
+      "id": "cc-content-jurisdiction",
+      "file": "clusters/171-cc-content-jurisdiction.json",
+      "cluster": "crosscut",
+      "order": 16,
+      "title": "İçerik & Ürün Jurisdiction"
+    },
+    {
+      "id": "cc-cultural-ux",
+      "file": "clusters/172-cc-cultural-ux.json",
+      "cluster": "crosscut",
+      "order": 17,
+      "title": "Kültürel UX"
     },
     {
       "file": "clusters/38-dx-cli.json",

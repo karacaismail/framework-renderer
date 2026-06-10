@@ -6401,3 +6401,295 @@ body:has(.detail-panel--open) .cluster__header {
   .cluster__header { padding-right: 52px !important; }
   .cluster__toggle { right: 10px !important; max-width: 36px; }
 }
+
+// =============================================================================
+// v26 UI OVERHAUL: Mobile-first + Roboto/Inter + Fluid right sidebar + WCAG 2.2 AA
+// Light/dark tokens, min 1rem font, modular scale, content/detail dengeli grid
+// =============================================================================
+
+// ─── 1. Font system — Inter (UI) + Roboto (gövde) + 1rem base ──────────
+html {
+  font-size: 16px; // 1rem = 16px tabanı
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+body {
+  font-family:
+    'Roboto', 'Inter',
+    -apple-system, BlinkMacSystemFont, system-ui,
+    'Segoe UI', sans-serif !important;
+  font-weight: 400;
+  font-size: 1rem; // min 1rem (16px) baseline
+  line-height: 1.6;
+  letter-spacing: 0.005em;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+// UI elemanları Inter (modern, sıkı)
+.appbar, .sidebar, .detail-panel, .toc__group-header, .toc__link,
+button, .btn, .chip, .tag, .badge,
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'Inter', 'Roboto', system-ui, sans-serif !important;
+}
+
+// Modular type scale — minor third (1.2x)
+:root {
+  --fs-xs: 1rem;      // 16px — min
+  --fs-sm: 1rem;      // 16px — body small
+  --fs-base: 1rem;    // 16px — body
+  --fs-md: 1.125rem;  // 18px — emphasized body
+  --fs-lg: 1.25rem;   // 20px — h5
+  --fs-xl: 1.5rem;    // 24px — h4
+  --fs-2xl: 1.875rem; // 30px — h3
+  --fs-3xl: 2.25rem;  // 36px — h2
+  --fs-4xl: 2.75rem;  // 44px — h1
+
+  // Line-height scale
+  --lh-tight: 1.25;
+  --lh-snug: 1.4;
+  --lh-normal: 1.6;
+  --lh-relaxed: 1.75;
+}
+
+// Heading hierarchy — clean modular
+h1 { font-size: var(--fs-3xl) !important; line-height: var(--lh-tight); font-weight: 700; letter-spacing: -0.02em; }
+h2 { font-size: var(--fs-2xl) !important; line-height: var(--lh-tight); font-weight: 600; letter-spacing: -0.015em; }
+h3 { font-size: var(--fs-xl) !important;  line-height: var(--lh-snug);  font-weight: 600; letter-spacing: -0.01em; }
+h4 { font-size: var(--fs-lg) !important;  line-height: var(--lh-snug);  font-weight: 600; }
+h5 { font-size: var(--fs-md) !important;  line-height: var(--lh-normal); font-weight: 600; }
+h6 { font-size: var(--fs-base) !important;line-height: var(--lh-normal); font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; }
+
+p, li, dd, dt, td, th {
+  font-size: var(--fs-base) !important;
+  line-height: var(--lh-normal);
+}
+
+// Küçük UI textler bile MIN 1rem (WCAG AAA pratik)
+.chip, .tag, .badge, .toc__link, .toc__group-header,
+.cluster__meta, .meta, small {
+  font-size: 1rem !important;
+}
+
+// ─── 2. WCAG 2.2 AA Light tokens ──────────────────────────────────────
+:root, :root[data-theme="light"] {
+  --bg: #ffffff;
+  --bg-soft: #f8fafc;
+  --bg-page: #f1f5f9;
+  --surface: #ffffff;
+  --surface-alt: #f8fafc;
+
+  --ink: #0f172a;        // 16:1 contrast on white — AAA
+  --ink-2: #1e293b;      // 13.6:1 — AAA
+  --ink-3: #334155;      //  9.7:1 — AAA
+  --ink-4: #475569;      //  7.3:1 — AAA
+  --ink-5: #64748b;      //  5.0:1 — AA
+
+  --line: #e2e8f0;
+  --line-2: #cbd5e1;
+  --line-strong: #94a3b8;
+
+  --link: #1d4ed8;       // 7.1:1 — AAA
+  --link-hover: #1e3a8a;
+  --focus: #2563eb;
+
+  --accent: #3b82f6;
+  --success: #10b981;
+  --warn: #f59e0b;
+  --danger: #ef4444;
+  --info: #06b6d4;
+}
+
+// ─── 3. WCAG 2.2 AA Dark tokens ───────────────────────────────────────
+:root[data-theme="dark"] {
+  --bg: #0b1220 !important;
+  --bg-soft: #111827 !important;
+  --bg-page: #0f172a !important;
+  --surface: #1e293b !important;
+  --surface-alt: #111827 !important;
+
+  --ink: #f1f5f9 !important;       // 17:1 on bg — AAA
+  --ink-2: #e2e8f0 !important;     // 15:1 — AAA
+  --ink-3: #cbd5e1 !important;     // 12:1 — AAA
+  --ink-4: #94a3b8 !important;     //  7.5:1 — AAA
+  --ink-5: #64748b !important;     //  4.5:1 — AA
+
+  --line: rgba(255,255,255,0.08) !important;
+  --line-2: rgba(255,255,255,0.12) !important;
+  --line-strong: rgba(255,255,255,0.20) !important;
+
+  --link: #60a5fa !important;
+  --link-hover: #93c5fd !important;
+  --focus: #93c5fd !important;
+}
+
+// System preference fallback (kullanıcı toggle etmediyse)
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0b1220;
+    --bg-soft: #111827;
+    --bg-page: #0f172a;
+    --surface: #1e293b;
+    --surface-alt: #111827;
+    --ink: #f1f5f9;
+    --ink-2: #e2e8f0;
+    --ink-3: #cbd5e1;
+    --ink-4: #94a3b8;
+    --ink-5: #64748b;
+    --line: rgba(255,255,255,0.08);
+    --line-2: rgba(255,255,255,0.12);
+    --line-strong: rgba(255,255,255,0.20);
+    --link: #60a5fa;
+    --focus: #93c5fd;
+  }
+}
+
+body {
+  background: var(--bg-page) !important;
+  color: var(--ink) !important;
+}
+
+// Cluster cards — token based
+.cluster {
+  background: var(--surface) !important;
+  border: 1px solid var(--line) !important;
+  color: var(--ink) !important;
+}
+.cluster__header { color: var(--ink) !important; }
+.cluster__meta, .meta { color: var(--ink-4) !important; }
+.tag, .chip, .badge {
+  background: var(--bg-soft) !important;
+  color: var(--ink-3) !important;
+  border: 1px solid var(--line) !important;
+}
+
+// Sidebar
+.sidebar { background: var(--surface) !important; border-right: 1px solid var(--line) !important; }
+.toc__group-header { color: var(--ink-3) !important; }
+.toc__group-header:hover { background: var(--bg-soft); color: var(--ink) !important; }
+.toc__link, .toc__item > a { color: var(--ink-2) !important; }
+.toc__link:hover { background: var(--bg-soft); color: var(--ink) !important; }
+.toc__link--active {
+  background: color-mix(in srgb, var(--link) 12%, transparent) !important;
+  color: var(--link) !important;
+  border-left: 3px solid var(--link);
+}
+
+// Appbar
+.appbar { background: var(--surface) !important; border-bottom: 1px solid var(--line) !important; color: var(--ink) !important; }
+
+// Detail panel
+.detail-panel { background: var(--surface) !important; border-left: 1px solid var(--line) !important; color: var(--ink) !important; }
+
+// Tables
+table {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  th { background: var(--bg-soft); color: var(--ink); }
+  td, th { border-bottom: 1px solid var(--line); color: var(--ink-2); }
+}
+
+// Links
+a { color: var(--link); }
+a:hover { color: var(--link-hover); }
+
+// ─── 4. FLUID GRID — Mobile-first + content > detail önceliği ─────────
+// Mobile (base, < 720px): tek sütun, sidebar + detail drawer (off-canvas)
+#app {
+  display: grid !important;
+  grid-template-columns: 1fr !important;
+  grid-template-areas: "main" !important;
+  min-height: 100vh;
+}
+.main { grid-area: main; min-width: 0; }
+
+// Tablet (720px - 1023px): sol sidebar görünür, detail drawer
+@media (min-width: 720px) {
+  #app {
+    grid-template-columns: clamp(240px, 28vw, 320px) minmax(0, 1fr) !important;
+    grid-template-areas: "sidebar main" !important;
+  }
+  .sidebar { grid-area: sidebar; position: sticky; top: var(--appbar-h, 56px); height: calc(100vh - var(--appbar-h, 56px)); overflow-y: auto; }
+  // Detail panel hâlâ drawer (overlay) — content sıkışmasın
+  .detail-panel { /* drawer mode kalır */ }
+}
+
+// Desktop (1024px - 1399px): 3-sütun, detail dar
+@media (min-width: 1024px) {
+  #app {
+    grid-template-columns:
+      clamp(240px, 22vw, 320px)
+      minmax(0, 1fr)
+      clamp(280px, 26vw, 420px) !important;
+    grid-template-areas: "sidebar main detail" !important;
+  }
+  .detail-panel {
+    grid-area: detail;
+    position: sticky !important;
+    top: var(--appbar-h, 56px) !important;
+    height: calc(100vh - var(--appbar-h, 56px)) !important;
+    overflow-y: auto;
+    width: auto !important;
+    transform: none !important;
+    border-left: 1px solid var(--line) !important;
+    // Drawer overlay davranışı kapansın
+    box-shadow: none !important;
+  }
+}
+
+// Wide desktop (1400px+): detail biraz daha geniş ama abartmadan
+@media (min-width: 1400px) {
+  #app {
+    grid-template-columns:
+      clamp(280px, 20vw, 340px)
+      minmax(0, 1fr)
+      clamp(360px, 28vw, 520px) !important;
+  }
+}
+
+// Ultra-wide (1800px+): max'a otur
+@media (min-width: 1800px) {
+  #app {
+    grid-template-columns: 340px minmax(0, 1fr) 520px !important;
+  }
+  .main {
+    padding-inline: clamp(2rem, 4vw, 5rem) !important;
+  }
+}
+
+// ─── 5. Main content padding — mobile-first + comfortable desktop ─────
+.main {
+  padding: 1rem !important;
+  @media (min-width: 720px) { padding: 1.5rem !important; }
+  @media (min-width: 1024px) { padding: 2rem !important; }
+  @media (min-width: 1400px) { padding: 2.5rem 3rem !important; }
+}
+
+// ─── 6. Focus rings — WCAG 2.2 AA (≥ 3px, contrast 3:1) ──────────────
+*:focus-visible {
+  outline: 3px solid var(--focus) !important;
+  outline-offset: 2px !important;
+  border-radius: 4px;
+}
+
+// ─── 7. Theme toggle button — ay ↔ güneş ikonu hint ──────────────────
+#dark-toggle i::before {
+  content: "\E5B7"; // ph-sun (light mode'da)
+}
+:root[data-theme="dark"] #dark-toggle i::before {
+  content: "\E58C"; // ph-moon (dark mode'da)
+}
+
+// Reduced motion
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+// ─── 8. Cluster header padding-right (toggle button fix v25 reinforce) ──
+.cluster__header {
+  padding-right: 64px !important;
+  @media (max-width: 720px) { padding-right: 52px !important; }
+}

@@ -6358,3 +6358,46 @@ a {
     }
   }
 }
+
+// =============================================================================
+// v25 FIX: Cluster toggle button kesilme sorunu (detail panel açıkken)
+// Buton kart sağ kenarında absolute idi → container daraldığında dışarı taşıyor
+// Çözüm: header padding-right ile boşluk + buton içeri çekilir
+// =============================================================================
+.cluster {
+  position: relative;
+  overflow: hidden; // kart border-radius içinde içerik tutulur
+  &__header {
+    position: relative;
+    padding-right: 64px !important; // toggle için garanti boşluk
+    box-sizing: border-box;
+  }
+  &__toggle {
+    position: absolute !important;
+    top: 50% !important;
+    right: 14px !important;
+    left: auto !important;
+    transform: translateY(-50%) !important;
+    margin: 0 !important;
+    z-index: 2; // gradient/shadow üstünde
+    // Detail panel açıkken content daralsa bile buton kartın içinde kalır
+    max-width: 40px;
+  }
+  &--collapsed &__toggle i {
+    transform: rotate(0deg);
+  }
+  &:not(&--collapsed) &__toggle i {
+    transform: rotate(180deg);
+  }
+}
+
+// Detail panel açıkken cluster header'da min boşluk garantisi
+body:has(.detail-panel--open) .cluster__header {
+  padding-right: 56px !important;
+}
+
+// Mobile breakpoint için ufak ayar
+@media (max-width: 720px) {
+  .cluster__header { padding-right: 52px !important; }
+  .cluster__toggle { right: 10px !important; max-width: 36px; }
+}

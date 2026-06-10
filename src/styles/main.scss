@@ -6693,3 +6693,164 @@ a:hover { color: var(--link-hover); }
   padding-right: 64px !important;
   @media (max-width: 720px) { padding-right: 52px !important; }
 }
+
+// =============================================================================
+// v27 TEMA UNIFY — eski hardcoded koyu renkler vs yeni token sistemini çakıştır
+// HERO, FILTER-BAR, CLUSTER, DETAIL-PANEL hepsi tek tema kuralına uysun
+// =============================================================================
+
+// ─── HERO (üst başlık kartı) ──────────────────────────────────────────
+.hero,
+.appbar__hero,
+[class*="hero"] {
+  background: var(--surface) !important;
+  background-image: none !important;
+  color: var(--ink) !important;
+  border: 1px solid var(--line) !important;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04) !important;
+}
+.hero *, .hero__title, .hero__lede, .hero__meta,
+.hero__title *, .hero__lede *,
+[class*="hero"] h1, [class*="hero"] h2, [class*="hero"] h3,
+[class*="hero"] p {
+  color: var(--ink) !important;
+  text-shadow: none !important;
+}
+.hero__meta, .hero__lede, .hero small, .hero .meta {
+  color: var(--ink-3) !important;
+}
+
+// ─── FILTER BAR (LAYER + GRUP chip'leri) ──────────────────────────────
+.filter-bar,
+#filter-bar,
+[class*="filter-bar"] {
+  background: var(--bg-soft) !important;
+  background-image: none !important;
+  border: 1px solid var(--line) !important;
+  color: var(--ink) !important;
+  box-shadow: none !important;
+}
+.filter-bar__label, .filter-bar__title, .filter-bar h4 {
+  color: var(--ink-3) !important;
+}
+.filter-bar .chip, .chip {
+  background: var(--surface) !important;
+  color: var(--ink-2) !important;
+  border: 1px solid var(--line-2) !important;
+  &:hover {
+    background: var(--bg-soft) !important;
+    border-color: var(--line-strong) !important;
+  }
+  &--active, &.is-active, &[aria-pressed="true"] {
+    background: var(--link) !important;
+    color: #ffffff !important;
+    border-color: var(--link) !important;
+  }
+}
+
+// ─── CLUSTER KART — zemin, metin, meta ────────────────────────────────
+.cluster, .cluster__header, .cluster__body {
+  background-color: var(--surface) !important;
+  background-image: none !important;
+  color: var(--ink) !important;
+}
+.cluster {
+  border: 1px solid var(--line) !important;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04) !important;
+}
+.cluster__title, .cluster h1, .cluster h2, .cluster h3, .cluster h4 {
+  color: var(--ink) !important;
+  text-shadow: none !important;
+}
+.cluster__meta, .cluster__sp, .cluster__time, .cluster__state,
+.cluster .meta, .cluster small {
+  color: var(--ink-4) !important;
+}
+.cluster p, .cluster li, .cluster dd, .cluster dt, .cluster td, .cluster th {
+  color: var(--ink-2) !important;
+}
+.cluster a { color: var(--link) !important; }
+// Tag/chip altındaki
+.cluster .tag, .cluster .chip, .cluster .badge {
+  background: var(--bg-soft) !important;
+  color: var(--ink-3) !important;
+  border: 1px solid var(--line) !important;
+}
+
+// ─── DETAIL PANEL placeholder ("Bir karta tıkla") ─────────────────────
+.detail-panel,
+.detail-panel__placeholder,
+.detail-panel__empty,
+.detail-panel__body,
+[class*="detail-panel"] {
+  background: var(--surface) !important;
+  color: var(--ink) !important;
+}
+.detail-panel__placeholder, .detail-panel__empty {
+  color: var(--ink-3) !important;
+}
+.detail-panel__placeholder * {
+  color: inherit !important;
+}
+.detail-panel h1, .detail-panel h2, .detail-panel h3, .detail-panel h4 {
+  color: var(--ink) !important;
+}
+.detail-panel p, .detail-panel li {
+  color: var(--ink-2) !important;
+}
+
+// ─── SIDEBAR — toggle button (theme switch) net görünür ───────────────
+.appbar__action, #dark-toggle, #bookmarks-toggle, #share-toggle {
+  background: transparent !important;
+  color: var(--ink-2) !important;
+  border: 1px solid transparent !important;
+  &:hover {
+    background: var(--bg-soft) !important;
+    color: var(--ink) !important;
+    border-color: var(--line) !important;
+  }
+}
+
+// ─── SAYFA ZEMINI (body) ──────────────────────────────────────────────
+body, html {
+  background: var(--bg-page) !important;
+  color: var(--ink) !important;
+}
+
+// ─── DARK mode için EK güçlendirme — hero ve eski koyu zeminler ─────
+:root[data-theme="dark"] {
+  .hero, [class*="hero"] {
+    background: var(--surface) !important;
+    background-image: none !important;
+    color: var(--ink) !important;
+    border-color: var(--line) !important;
+  }
+  .filter-bar { background: var(--surface-alt) !important; }
+  .cluster {
+    background: var(--surface) !important;
+    border-color: var(--line) !important;
+  }
+  .detail-panel { background: var(--surface) !important; border-color: var(--line) !important; }
+
+  // Eski neumorphism shadow'larını dark mode'da kapat
+  .cluster, .hero, .filter-bar, .detail-panel {
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4) !important;
+  }
+}
+
+// ─── EXPAND/COLLAPSE toggle button (sağ üst yarım gri yuvarlak) ───────
+.cluster__toggle {
+  background: var(--bg-soft) !important;
+  color: var(--ink-2) !important;
+  border: 1px solid var(--line) !important;
+  border-radius: 8px !important;
+  width: 36px !important;
+  height: 36px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  &:hover {
+    background: var(--line) !important;
+    color: var(--ink) !important;
+  }
+}
